@@ -35,7 +35,7 @@ cd ..
 uv run python -m backend.demo
 ```
 
-Docker 不可用时可运行 `uv run pytest -q --category-report data/test-categories.json`，报告会明确标注 PostgreSQL 未运行的类别。演示地址为 http://127.0.0.1:8003；账号见 [README](../README.md)。完整合成流程脚本使用独立临时数据库，并禁止向外部服务发出 HTTP 请求。本轮浏览器截图使用另一个合成目录与端口 8004，不涉及真实运行数据。
+Docker 不可用时可运行 `uv run pytest -q --category-report data/test-categories.json`，报告会明确标注 PostgreSQL 未运行的类别。[本机演示地址](http://127.0.0.1:8003)的账号见 [README](../README.md)。完整合成流程脚本使用独立临时数据库，并禁止向外部服务发出 HTTP 请求。本轮浏览器截图使用另一个合成目录与端口 8004，不涉及真实运行数据。
 
 ```mermaid
 sequenceDiagram

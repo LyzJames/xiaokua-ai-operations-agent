@@ -39,7 +39,7 @@ cd ..
 uv run python -m backend.demo
 ```
 
-Windows PowerShell、macOS 和 Linux 均使用上面的逐行命令。打开 **http://127.0.0.1:8003**。
+Windows PowerShell、macOS 和 Linux 均使用上面的逐行命令。打开[本机演示工作台](http://127.0.0.1:8003)。
 
 | 合成账号 | 角色 | 演示密码 |
 | --- | --- | --- |
@@ -55,7 +55,7 @@ Windows PowerShell、macOS 和 Linux 均使用上面的逐行命令。打开 **h
 uv run python -m backend.demo --data-dir data/my-fresh-demo --port 8003
 ```
 
-演示入口拒绝复用没有演示标记的已有数据库，并阻止真实平台授权、凭据导入及外部回调。前端页顶明确标注合成数据。飞书事件模拟台在 **http://127.0.0.1:8003/demo/feishu**，登录工作台后打开；两个页面共享当前成员会话。
+演示入口拒绝复用没有演示标记的已有数据库，并阻止真实平台授权、凭据导入及外部回调。前端页顶明确标注合成数据。登录工作台后打开[飞书事件模拟台](http://127.0.0.1:8003/demo/feishu)；两个页面共享当前成员会话。
 
 ## 按这个顺序体验完整流程
 
