@@ -1,5 +1,7 @@
 # 小跨 · 全链路 AI 运营官研究原型
 
+[![Research prototype checks](https://github.com/LyzJames/xiaokua-ai-operations-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/LyzJames/xiaokua-ai-operations-agent/actions/workflows/ci.yml)
+
 一个把运营目标变成可追踪任务、把经验变成可复用技能的 AI Agent 参考实现。工作台连接飞书与 Shopify，围绕**消息 → 持久任务 → 操作方案 → 独立审批 → 执行 → 回读 → 审计**构建闭环。
 
 **用途：技术研究、教学、二次开发。** 默认提供无需账号、密钥或外部网络调用的离线演示。公开版本包含真实平台适配代码，但不包含任何实际账户的凭据、订单、成员资料或平台截图。Amazon、Meta Ads、采购支付为后续扩展方向。
@@ -128,6 +130,8 @@ docker stop xiaokua-postgres-test
 ```
 
 CI 包含离线后端测试、PostgreSQL 测试、演示业务验收、前端构建和公开文件检查，均不需要真实平台 secret。测试报告明确区分本次可复现的合成流程与此前真实开发平台的验收摘要。
+
+首次公开提交的 [GitHub Actions 验证](https://github.com/LyzJames/xiaokua-ai-operations-agent/actions/runs/38171802681) 已通过：Ubuntu 上 81 项测试、29 项完整流程断言、102 个公开文件检查，以及 Node 22 前端构建。仓库顶部徽章显示后续提交的实时状态。
 
 ## 目录导航
 

@@ -26,8 +26,8 @@
     },
     {
       "path": ".gitignore",
-      "bytes": 298,
-      "sha256": "266be3991942c2c8fa274e9b6441b89069946997000bb9b6a588c6c831efbc95"
+      "bytes": 312,
+      "sha256": "02017ca6d9539050a3e9d16bb23fea0b375d82930d40b4538da84cd16d6b2f63"
     },
     {
       "path": "alembic.ini",
@@ -351,8 +351,8 @@
     },
     {
       "path": "docs/TEST_REPORT.md",
-      "bytes": 12917,
-      "sha256": "3ecb6432e43f7af5c7a4946005fb803620c5b7e42828692cdcd3a78d04617a4c"
+      "bytes": 13217,
+      "sha256": "584a02b22c30df152bc8819e432afab01c9d73b07a0b8b42edf2455addce25e5"
     },
     {
       "path": "examples/support-synthetic.csv",
@@ -441,8 +441,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 11594,
-      "sha256": "bc8b0db4d00887a6670a4554f6f257db116cc01527781836e7e191a07b45bcba"
+      "bytes": 12107,
+      "sha256": "4d542952098c031cd58c4b552a5e71ab59c3424987fe465b83b49df909ff456d"
     },
     {
       "path": "scripts/backup_database.py",

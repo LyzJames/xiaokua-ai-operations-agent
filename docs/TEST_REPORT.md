@@ -12,10 +12,11 @@
 | 独立 PostgreSQL 测试 | 4 passed | 一次性本机 Docker PostgreSQL；与上面的 77 项合计 81 个不同测试通过 |
 | 完整离线业务验收 | 29 项断言通过 | [机器可读结果](demo-acceptance.json)，临时数据库，禁止对外 HTTP |
 | 前端构建 | 通过 | TypeScript + Vite；本机 Node 24.9.0 / npm 11.6.0；CI 使用 Node 22 |
+| GitHub Actions | backend / frontend 均成功 | Ubuntu 上 81 项测试、29 项完整流程断言、102 个公开文件检查；Node 22.23.3 前端构建 |
 | 浏览器操作 | 下方完整流程通过 | Chrome；工作台与模拟台共享登录会话，负责人和审批人分别操作 |
 | 公开文件审查 | 发布目录扫描与逐图人工检查 | [隐私规则](PRIVACY.md)、[文件清单](public-manifest.json)、[截图清单](screenshot-manifest.json) |
 
-Python 测试出现两条第三方 SDK 弃用提示，没有失败。GitHub Actions 会在公开提交后运行；本机结果和云端状态分别查看，不互相替代。
+Python 测试出现两条第三方 SDK 弃用提示，没有失败。首次完整公开提交 `a6eff5f` 的 [GitHub Actions](https://github.com/LyzJames/xiaokua-ai-operations-agent/actions/runs/38171802681) 已完成并成功；本机结果和云端状态分别记录，后续提交状态见仓库 Actions 页面。
 
 ```bash
 uv sync --frozen

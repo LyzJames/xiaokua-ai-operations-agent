@@ -9,6 +9,7 @@ __pycache__/
 data/
 node_modules/
 frontend/dist/
+*.tsbuildinfo
 *.log
 *.png
 *.jpg
