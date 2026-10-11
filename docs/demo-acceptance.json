@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-11T17:08:39.374794+00:00",
+  "synthetic": true,
+  "platform_http_calls": 0,
+  "model_http_calls": 0,
+  "checks_passed": 29,
+  "checks": [
+    {
+      "name": "unauthenticated outbox denied",
+      "passed": true
+    },
+    {
+      "name": "CSRF required for simulated events",
+      "passed": true
+    },
+    {
+      "name": "real credential import blocked",
+      "passed": true
+    },
+    {
+      "name": "simulated message accepted",
+      "passed": true
+    },
+    {
+      "name": "two test orders and one variant synchronized",
+      "passed": true
+    },
+    {
+      "name": "message receives task and completion notifications",
+      "passed": true
+    },
+    {
+      "name": "inventory before/after proposal persisted",
+      "passed": true
+    },
+    {
+      "name": "applicant cannot approve own action",
+      "passed": true
+    },
+    {
+      "name": "proposal does not change inventory",
+      "passed": true
+    },
+    {
+      "name": "independent card approval executes",
+      "passed": true
+    },
+    {
+      "name": "duplicate card does not repeat write",
+      "passed": true
+    },
+    {
+      "name": "duplicate returns already processed notification",
+      "passed": true
+    },
+    {
+      "name": "rejected description never written",
+      "passed": true
+    },
+    {
+      "name": "approved description is escaped and written",
+      "passed": true
+    },
+    {
+      "name": "synthetic refund is exactly 0.50 USD",
+      "passed": true
+    },
+    {
+      "name": "fulfillment succeeds after approval",
+      "passed": true
+    },
+    {
+      "name": "tracking update is read back",
+      "passed": true
+    },
+    {
+      "name": "cancel does not trigger another refund",
+      "passed": true
+    },
+    {
+      "name": "ten synthetic support records imported",
+      "passed": true
+    },
+    {
+      "name": "learning creates two inactive drafts without duplicates",
+      "passed": true
+    },
+    {
+      "name": "skill export contains evidence and market",
+      "passed": true
+    },
+    {
+      "name": "three role reports explicitly use rules",
+      "passed": true
+    },
+    {
+      "name": "German query excludes French knowledge",
+      "passed": true
+    },
+    {
+      "name": "Markdown report export succeeds",
+      "passed": true
+    },
+    {
+      "name": "audit CSV export succeeds",
+      "passed": true
+    },
+    {
+      "name": "audit chain verifies",
+      "passed": true
+    },
+    {
+      "name": "no failed background jobs",
+      "passed": true
+    },
+    {
+      "name": "restart recovers queued sync and inventory",
+      "passed": true
+    },
+    {
+      "name": "audit remains valid after restart",
+      "passed": true
+    }
+  ]
+}

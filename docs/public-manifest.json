@@ -1,0 +1,513 @@
+{
+  "schema": 1,
+  "synthetic_evidence_only": true,
+  "hash": "SHA-256",
+  "self_excluded": "docs/public-manifest.json",
+  "files": [
+    {
+      "path": ".dockerignore",
+      "bytes": 188,
+      "sha256": "e111363ff3e8015ce14822a43d2455ba8ff61d0ad6deeb26a11161e051ecc5f0"
+    },
+    {
+      "path": ".env.example",
+      "bytes": 1064,
+      "sha256": "13d18827acaca7a8fb598b007bc2dc95237ed736a247ad2845bcdc213e2b2de9"
+    },
+    {
+      "path": ".gitattributes",
+      "bytes": 56,
+      "sha256": "097293e489cb8286f8afbe93721dfd8fad2637b517135a0d8a4ed2b4bcff1097"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 1489,
+      "sha256": "fd0716fdc33e993c5b1182a29bbf718998baae39a9bb4c9feb4a90c716824a69"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 298,
+      "sha256": "266be3991942c2c8fa274e9b6441b89069946997000bb9b6a588c6c831efbc95"
+    },
+    {
+      "path": "alembic.ini",
+      "bytes": 107,
+      "sha256": "18ca98e942e2fb62b025b8ceac6045b62e969f8cadf30b6562ea15d20c6283b0"
+    },
+    {
+      "path": "backend/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "backend/config.py",
+      "bytes": 1682,
+      "sha256": "8710a25038961a8783cdd49601573a03ea12a103f5d7218cbb7cb279d8e9d00d"
+    },
+    {
+      "path": "backend/demo.py",
+      "bytes": 7232,
+      "sha256": "d0a4b19d2e8d7adf33b57e9256f071ba81cde412f0bfbcb314fac6cfed14f018"
+    },
+    {
+      "path": "backend/demo_shop.py",
+      "bytes": 6017,
+      "sha256": "7520cc8a0b139f58b3958fb9e80d480253c7651dc825ddc51e31e1fdc6712ac8"
+    },
+    {
+      "path": "backend/engine.py",
+      "bytes": 28818,
+      "sha256": "3f6db06c060285b6120faca5a5e61bf0c18914d779b478c0e56f57307eb6460d"
+    },
+    {
+      "path": "backend/feishu_bot.py",
+      "bytes": 2921,
+      "sha256": "841d0fb77bbfb43bc8f3ea949b0360bf7521c25551ccc04706fe4f7b75041810"
+    },
+    {
+      "path": "backend/integrations.py",
+      "bytes": 5887,
+      "sha256": "f9aaf75f5fc1ffbf6ed2ce54cd26d176e3bceaca7df2eb2c9577c407d56aae3c"
+    },
+    {
+      "path": "backend/main.py",
+      "bytes": 12266,
+      "sha256": "150b2236fe06371eccea63b4a4eebd4538c983166700943272cbc8673f79e190"
+    },
+    {
+      "path": "backend/policy.py",
+      "bytes": 2647,
+      "sha256": "fbfa245a9357b6a0a84d9c1e80863631d157bc65941976b7f2a19fc894c60340"
+    },
+    {
+      "path": "backend/production/__init__.py",
+      "bytes": 78,
+      "sha256": "0c713ed2da72b874d98bd7d58d2fb2668d4f19cf40284adc7ef919477748b257"
+    },
+    {
+      "path": "backend/production/api.py",
+      "bytes": 43190,
+      "sha256": "002853912e9ff155c8a786c739d42a94f0dbeb3a20c527a80cf38fef3cc9f2c3"
+    },
+    {
+      "path": "backend/production/database.py",
+      "bytes": 10983,
+      "sha256": "7eb116b21a5890e7f98087c29ea90e095a4744015a293e8b51d8b9f4a5ff001e"
+    },
+    {
+      "path": "backend/production/feishu.py",
+      "bytes": 11890,
+      "sha256": "f527130b639b13905d4be2a5b1de9a0e67540003d25e4db5f23c40c9e128a0c0"
+    },
+    {
+      "path": "backend/production/feishu_ws.py",
+      "bytes": 2746,
+      "sha256": "5af5ef5334e9e754f3d277025a0457fa6128563a15048f1763052efa70f604cf"
+    },
+    {
+      "path": "backend/production/security.py",
+      "bytes": 3938,
+      "sha256": "0cb25fc13df48afcc256c99b327645352a10e69a779cfe5e992e570a40be88f3"
+    },
+    {
+      "path": "backend/production/shopify.py",
+      "bytes": 12651,
+      "sha256": "799dfafaccc3dd74e156cef0d66dfd3ad4acfe6e7e4c0c11a675aaba692d99db"
+    },
+    {
+      "path": "backend/production/worker.py",
+      "bytes": 7981,
+      "sha256": "470f66a0c378a1469b60a4796718575fbbe9648152cdf18603c9772cc5e26d54"
+    },
+    {
+      "path": "backend/production/workflows.py",
+      "bytes": 29283,
+      "sha256": "170d0183e63a457ea49922b6d4601551c217db3ec3f22ed3fa984bd480d2564a"
+    },
+    {
+      "path": "backend/service.py",
+      "bytes": 153,
+      "sha256": "9718c2fe5dcd4d81420ce6f83a414a13a72cf0486a58908d4a842b268508477e"
+    },
+    {
+      "path": "backend/store.py",
+      "bytes": 11927,
+      "sha256": "3b3e16ed5442596d3f13ac37f1a5b3867e3bcf95dce75a11d9a5a67abcd162d2"
+    },
+    {
+      "path": "compose.yaml",
+      "bytes": 2565,
+      "sha256": "2ffc7a548d7361764120f1e2a623b62f6eb9dabb88460dd758c606f5fb46b805"
+    },
+    {
+      "path": "deploy/Caddyfile",
+      "bytes": 115,
+      "sha256": "5dffae32d4ae64f494e791d28a7df0743be0e107764a12a2e89e027a78931b83"
+    },
+    {
+      "path": "deploy/shopify.app.toml.example",
+      "bytes": 1019,
+      "sha256": "ab2f321af66df1f5e230b50de6de7bbbb4cc9b4805319cfd3356264189e4a14a"
+    },
+    {
+      "path": "Dockerfile",
+      "bytes": 847,
+      "sha256": "b0b4f2cf8c4916ffdaaee76181501453cff8179cba8980f2411734ebc9f7871d"
+    },
+    {
+      "path": "docs/ACCEPTANCE.md",
+      "bytes": 2169,
+      "sha256": "6d953977c16f40dd93b7717606d3914c4fab54a4ce50f4d3e5d15a94081a8dfd"
+    },
+    {
+      "path": "docs/demo-acceptance.json",
+      "bytes": 2736,
+      "sha256": "e446ed3bd616a921ef8e90927f56085b6683814e6f36a62847c72805b2d88cf3"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "bytes": 1783,
+      "sha256": "eea5b58f972075608d0c048fcda10043fb4476d425d7029bf038b45f931baef3"
+    },
+    {
+      "path": "docs/images/01-login.jpg",
+      "bytes": 27708,
+      "sha256": "1deeaa5b135b9996827fe27604bc7700d98860e427c0831b78811a0cb6001e18"
+    },
+    {
+      "path": "docs/images/02-overview.jpg",
+      "bytes": 52151,
+      "sha256": "e054f2c80bd708f829c9304fe681d7eeee28713a79bb2aab8cbeccabb53910f6"
+    },
+    {
+      "path": "docs/images/03-feishu-sync-result.jpg",
+      "bytes": 58460,
+      "sha256": "fa6d9f7b9410b796490f7853e0b48ad0566891c59a8f8395269c37895feb9ea7"
+    },
+    {
+      "path": "docs/images/03b-feishu-completion.jpg",
+      "bytes": 53330,
+      "sha256": "3206d2ab194a9db1114fd58e849e0c67ce1aa1b8d0c143e087a7df130e03c984"
+    },
+    {
+      "path": "docs/images/04-synced-orders.jpg",
+      "bytes": 48277,
+      "sha256": "b3eafd11f82829d73ba660df8abfeea2634ead643660a67ba33a66b43ad8c252"
+    },
+    {
+      "path": "docs/images/05-inventory-proposal.jpg",
+      "bytes": 26746,
+      "sha256": "56a6bd31039c2cac7505a33f92fe9ea193dd551ab34659b0ba0ba8bd8b9e2c57"
+    },
+    {
+      "path": "docs/images/06-independent-approval-required.jpg",
+      "bytes": 37716,
+      "sha256": "a8ad15e41fc5546035a9571bdd84e3a066173c0608aa8eb2e840f9515a218a4a"
+    },
+    {
+      "path": "docs/images/07-feishu-approval-card.jpg",
+      "bytes": 54564,
+      "sha256": "72826bd6e5ab84bb8b15357dc615d32ec92e87a4b32fa9f1110a55ab6b8bf686"
+    },
+    {
+      "path": "docs/images/08-inventory-executed.jpg",
+      "bytes": 41229,
+      "sha256": "05a4d8e5a37921dba2edcd6e9e8334120d82facf44d6588aaee717991f3ff7a6"
+    },
+    {
+      "path": "docs/images/09-duplicate-approval-blocked.jpg",
+      "bytes": 41755,
+      "sha256": "99c80131ba4c8646336e6cd482ca4619c2d86566a056a7daf202d4505d6b4edd"
+    },
+    {
+      "path": "docs/images/10-description-proposal.jpg",
+      "bytes": 28422,
+      "sha256": "e86a3fea09fde2be29b8ae6ba318ccbe0a953cbbe947762452426ce94316ead5"
+    },
+    {
+      "path": "docs/images/11-refund-proposal.jpg",
+      "bytes": 31594,
+      "sha256": "f59d2fa0d6d2ed8f248645f716293b9d0f86668365a1648b3768114f0f36dbdf"
+    },
+    {
+      "path": "docs/images/12-fulfillment-proposal.jpg",
+      "bytes": 33178,
+      "sha256": "d2c7067eb1b193a8e87d9f06d407a6fa616243d7868066d0ce409a0501efaf31"
+    },
+    {
+      "path": "docs/images/13-order-approval-cards.jpg",
+      "bytes": 46121,
+      "sha256": "cad6b3f12d13d9c38a6ecec5464696a3d011360644ede3c0482fe97640b24036"
+    },
+    {
+      "path": "docs/images/14-refund-and-fulfillment-result.jpg",
+      "bytes": 49417,
+      "sha256": "54be9d66efcae1b6bcf25b3648c874ba3d092923464639b8e172c9ac5807ced8"
+    },
+    {
+      "path": "docs/images/15-description-rejected.jpg",
+      "bytes": 51991,
+      "sha256": "370d8855ca23af53aa03890729801347e1d58d5e89a3d4086a77e9fc4de04350"
+    },
+    {
+      "path": "docs/images/16-tracking-proposal.jpg",
+      "bytes": 34469,
+      "sha256": "81b4e0efdfe9980facc75f5af7133d7190091e6ba7a546cea48f6511df45171b"
+    },
+    {
+      "path": "docs/images/17-cancel-proposal.jpg",
+      "bytes": 28520,
+      "sha256": "d1752745ad10caf0e99dc8aaa9d77c851ef6cf0a11da119bbad2e910a66ffc83"
+    },
+    {
+      "path": "docs/images/18-workbench-approval.jpg",
+      "bytes": 33404,
+      "sha256": "ebd51af949eb211a46595b9f948d1c5016d3fa86520a43c8c420c53b492dde72"
+    },
+    {
+      "path": "docs/images/18b-cancel-approval.jpg",
+      "bytes": 33272,
+      "sha256": "5ba0ba0c5c93c94364f64bc08e4aa85dd0d75a11438fbf49a90aabd389d0a1f2"
+    },
+    {
+      "path": "docs/images/19-final-order-state.jpg",
+      "bytes": 49099,
+      "sha256": "90dbf0e8cbafad8172492d11aafa5e0acfabd1a268445070b07a91965c69b478"
+    },
+    {
+      "path": "docs/images/20-support-import.jpg",
+      "bytes": 39844,
+      "sha256": "6cba95d146ced7da327facda6e16dceb078a495bd3a8977d6bcee64285cd6e6b"
+    },
+    {
+      "path": "docs/images/21-skill-drafts.jpg",
+      "bytes": 67279,
+      "sha256": "df5167d1793b8cb9fa25a90bac9e3e2313d4502b8cc4d02826002427a06570e4"
+    },
+    {
+      "path": "docs/images/22-enabled-skills.jpg",
+      "bytes": 65365,
+      "sha256": "f14e5023aa513a01d3beddf8c833e8d66bd9d7d968a04f43d27860334838d76f"
+    },
+    {
+      "path": "docs/images/23-three-role-report.jpg",
+      "bytes": 46342,
+      "sha256": "ebb7faabd28d6bb8c11df4e3a2f075d42f681a0ec779ce7676a45d92a1221990"
+    },
+    {
+      "path": "docs/images/23b-german-knowledge-evidence.jpg",
+      "bytes": 44810,
+      "sha256": "8d4bf7844023e99ef33c04642ef51aa12994a8398d97c9b623b417c496013f45"
+    },
+    {
+      "path": "docs/images/24-feishu-analysis-completion.jpg",
+      "bytes": 52540,
+      "sha256": "1abe6c20063d2d083ae497859250c7d9e83e3f983f33ef20a2903627a9c3e358"
+    },
+    {
+      "path": "docs/images/25-audit-chain.jpg",
+      "bytes": 49930,
+      "sha256": "d109064dcb1f7ed48cf615b61fe13217c2eb5d770139859b8e8c3b6a984f3c10"
+    },
+    {
+      "path": "docs/images/26-durable-jobs.jpg",
+      "bytes": 40316,
+      "sha256": "b8ca91420cf689bf15e65dd0cc167baf91d6547bca565a1fad93bac78a7a8012"
+    },
+    {
+      "path": "docs/images/27-synthetic-members.jpg",
+      "bytes": 49844,
+      "sha256": "e8840f0025b323ff9f4f25f64dbadf81aaee014cf372c796593c9c0e0b9934cb"
+    },
+    {
+      "path": "docs/images/28-demo-connections.jpg",
+      "bytes": 51039,
+      "sha256": "1ce627c2dc58059bebaa8eb17ad5fdcffa0582bb5035c6fcb58107e88b41a494"
+    },
+    {
+      "path": "docs/images/28b-reserved-platforms.jpg",
+      "bytes": 52397,
+      "sha256": "c43cf277acc4cfd93924101459d2af8d46dea7dd15da7d6143108d00cb632cdf"
+    },
+    {
+      "path": "docs/INTEGRATIONS.md",
+      "bytes": 6533,
+      "sha256": "02b200ef16b3a9d0a87a15c86d4a9b0a695505e7f159b30bef443ec9fe844248"
+    },
+    {
+      "path": "docs/PRIVACY.md",
+      "bytes": 2131,
+      "sha256": "f67bd6558547b6edecd8b01b23c5ab803a0f1b2840949736738d36b558497b3f"
+    },
+    {
+      "path": "docs/RESEARCH.md",
+      "bytes": 3649,
+      "sha256": "1fac3ddf0e04f7a4a962d7df16837b499ff8aa2578b2f7e7448ca3d68731ef29"
+    },
+    {
+      "path": "docs/screenshot-manifest.json",
+      "bytes": 7634,
+      "sha256": "69b952c07820f390920232e2c26e0d85828d3719e8fdcba2f514e3ef646fb3b0"
+    },
+    {
+      "path": "docs/TEST_REPORT.md",
+      "bytes": 12917,
+      "sha256": "3ecb6432e43f7af5c7a4946005fb803620c5b7e42828692cdcd3a78d04617a4c"
+    },
+    {
+      "path": "examples/support-synthetic.csv",
+      "bytes": 728,
+      "sha256": "1df0935dc2f30c8537f3ea0f135cd6712a5784f2615d7937bd2f43e732f0f6a2"
+    },
+    {
+      "path": "frontend/demo/feishu.html",
+      "bytes": 1696,
+      "sha256": "8c70aa3a8370b9d734165c319fcb860b2e77f4a7aaf5dabe776851a653488a91"
+    },
+    {
+      "path": "frontend/demo/feishu.js",
+      "bytes": 2353,
+      "sha256": "e7b886e3558395a83a92dc4b791d58875f43694f3a2800da23f69312195feb50"
+    },
+    {
+      "path": "frontend/index.html",
+      "bytes": 330,
+      "sha256": "dfc306e5fd3fa26f7466fea6485ba7bc431e9230d7bbe210c5d865d007f38b96"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "bytes": 63581,
+      "sha256": "013aeb0a9660067b9f8800019461ef115a065b4e4ad855ae9f82cd7d00ab5f95"
+    },
+    {
+      "path": "frontend/package.json",
+      "bytes": 537,
+      "sha256": "8258b01f89820e4ae9559209559c4acebfd91c3d03c2d8751777ccb2e173bf6a"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "bytes": 54970,
+      "sha256": "061db91970801dc4e4281ef84e206d28b470d3315d41f9a8c4f8a6573d7a30b6"
+    },
+    {
+      "path": "frontend/src/product.css",
+      "bytes": 17322,
+      "sha256": "229af3dcb5fcab247231154f608be79780e981050c8e2bcdb451e7b78eca9e13"
+    },
+    {
+      "path": "frontend/src/production.tsx",
+      "bytes": 42490,
+      "sha256": "12604412553f4f9da41c3c66834aaab69bc71f9362ffc6452b4a88a9a477e2f2"
+    },
+    {
+      "path": "frontend/src/styles.css",
+      "bytes": 46864,
+      "sha256": "06abdbab072204417cf6282b342c817b5652ba825161a7a826a767ee320a2dd6"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "bytes": 339,
+      "sha256": "ba5cdb1b5fed52215198381d387f55deb41bd8a6efdffcf40aa4f94f4a6ae0d6"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "bytes": 218,
+      "sha256": "062b7923defdd77033efef9d24c3b811f116fc82d38c5ada4af913f6b43a1186"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1077,
+      "sha256": "26ae5d6185dd477eb7909fa9d19c7a70c41d8e761a6312c6af8d308368454a2f"
+    },
+    {
+      "path": "migrations/env.py",
+      "bytes": 670,
+      "sha256": "63373c244b99101886d70385b78146436da3e89df16a390fb8d7d9c9f4e85b63"
+    },
+    {
+      "path": "migrations/script.py.mako",
+      "bytes": 353,
+      "sha256": "35f7b28d5b2b34e61e00c128cb8eac671c8628cecda7ed8c716befb4f1d9acea"
+    },
+    {
+      "path": "migrations/versions/0001_product.py",
+      "bytes": 351,
+      "sha256": "73472fc5985b8af85c2cea289fde492514bc7652597249e24360f2c2df847ac8"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 589,
+      "sha256": "cab194cc51a025652a5de279daaeb66d9de1e80fba599e4b95df1d0f01da628f"
+    },
+    {
+      "path": "README.md",
+      "bytes": 11594,
+      "sha256": "bc8b0db4d00887a6670a4554f6f257db116cc01527781836e7e191a07b45bcba"
+    },
+    {
+      "path": "scripts/backup_database.py",
+      "bytes": 2304,
+      "sha256": "711170692e6d45e7b0854af9b809a480da538f4be90cacd55a8bff534e3b4327"
+    },
+    {
+      "path": "scripts/check_publication.py",
+      "bytes": 4039,
+      "sha256": "77fb1446faea7d5e8f544f80898d79b016017842cacacfe8277726b02dc62598"
+    },
+    {
+      "path": "scripts/demo_acceptance.py",
+      "bytes": 10343,
+      "sha256": "7109672709354551e7d48a24b41197f6be677e37d6eed28ddbdde7411f853de2"
+    },
+    {
+      "path": "scripts/prepare_deploy.py",
+      "bytes": 1949,
+      "sha256": "363d468587969c7d686ea4170fd9c148bc4a37cda8f8a0b6069f29d7be89892e"
+    },
+    {
+      "path": "scripts/run_postgres_tests.py",
+      "bytes": 896,
+      "sha256": "47d76ea22c5a8b36f32f226ca007479631b983ef079ed736124cf24af8bfd62a"
+    },
+    {
+      "path": "scripts/start_test_postgres.py",
+      "bytes": 1149,
+      "sha256": "bb367f1dc1c26d5654166cf4cbb14cd424b41cc51e951c77a3b3c4d13580b62c"
+    },
+    {
+      "path": "tests/test_api.py",
+      "bytes": 1729,
+      "sha256": "0bde3a8bc5d183df693cc4417e9359722d7397ca157e1c545078c9e4542ef721"
+    },
+    {
+      "path": "tests/test_demo.py",
+      "bytes": 5796,
+      "sha256": "5a7c9c06e5689aa9d38f2e5ad6464951f62170dc2a569c9ebfc126b9e77354ab"
+    },
+    {
+      "path": "tests/test_feishu_ws.py",
+      "bytes": 3053,
+      "sha256": "df9c14f4d30d88ba9256e933b08157393584a6e4fc08912d986f800efc88a58c"
+    },
+    {
+      "path": "tests/test_postgres.py",
+      "bytes": 3152,
+      "sha256": "a9879e9c9cf127b5ed9220c4fcc98c4e9722dbb815d1e55ba650aa3c6a8fba43"
+    },
+    {
+      "path": "tests/test_production.py",
+      "bytes": 29311,
+      "sha256": "675df9ad9696dc397d4f35835fc9f729c994578a8c85cd22b052a7af3efde722"
+    },
+    {
+      "path": "tests/test_workflows.py",
+      "bytes": 8823,
+      "sha256": "5488168bfa553f65d394ed4a956fa236b05ea68457995177b0046e10003b7e0c"
+    },
+    {
+      "path": "uv.lock",
+      "bytes": 263035,
+      "sha256": "36cf8ae554c87e7b025da8349b754f067c806585775aac5adf6e5782ec2a8cf8"
+    }
+  ]
+}

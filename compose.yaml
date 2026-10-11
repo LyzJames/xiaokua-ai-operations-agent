@@ -1,0 +1,88 @@
+name: xiaokua
+x-app: &app
+  image: xiaokua:0.2.0
+  build: .
+  restart: unless-stopped
+  env_file: .deploy/production.env
+  environment:
+    APP_ENV: production
+    DATABASE_URL_FILE: /run/secrets/database_url
+    ENCRYPTION_KEYS_FILE: /run/secrets/encryption_key
+    XIAOKUA_DATA_DIR: /app/data
+    WORKER_ENABLED: "false"
+    ALLOW_REGISTRATION: "false"
+    SHOPIFY_TEST_ONLY: "true"
+  secrets: [database_url, encryption_key]
+  volumes: [app_data:/app/data]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  tmpfs: [/tmp]
+  networks: [internal, outbound]
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: xiaokua
+      POSTGRES_USER: xiaokua
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [pg_data:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U xiaokua -d xiaokua"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  migrate:
+    <<: *app
+    restart: "no"
+    command: [python, -m, alembic, upgrade, head]
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *app
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health',timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+  worker:
+    <<: *app
+    command: [python, -m, backend.production.worker]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  feishu_ws:
+    <<: *app
+    profiles: [feishu-ws]
+    command: [python, -m, backend.production.feishu_ws, --connection-id, "${FEISHU_CONNECTION_ID:-not-configured}"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    env_file: .deploy/production.env
+    ports: ["80:80", "443:443"]
+    volumes: ["./deploy/Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data", "caddy_config:/config"]
+    networks: [outbound]
+    depends_on: [api]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+secrets:
+  db_password: {file: .deploy/secrets/db-password}
+  database_url: {file: .deploy/secrets/database-url}
+  encryption_key: {file: .deploy/secrets/encryption-key}
+volumes:
+  app_data:
+  pg_data:
+  caddy_data:
+  caddy_config:
+networks:
+  internal: {internal: true}
+  outbound:

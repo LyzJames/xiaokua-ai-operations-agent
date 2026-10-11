@@ -1,0 +1,25 @@
+[project]
+name = "xiaokua-operations"
+version = "0.2.0"
+description = "小跨 · 全链路 AI 运营官"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.34,<1",
+  "httpx>=0.28,<1",
+  "langgraph>=1.0,<2",
+  "langgraph-checkpoint-sqlite>=2,<4",
+  "python-dotenv>=1,<2",
+  "tzdata>=2025.1",
+  "lark-oapi>=1.4,<2",
+  "sqlalchemy>=2.0,<3",
+  "psycopg[binary]>=3.2,<4",
+  "cryptography>=45,<48",
+  "argon2-cffi>=25,<26",
+  "alembic>=1.16,<2",
+]
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
