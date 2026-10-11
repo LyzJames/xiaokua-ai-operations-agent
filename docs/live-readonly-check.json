@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-11T21:04:09.216881+00:00",
+  "scope": "read-only connectivity; not full event or business acceptance",
+  "model_input": "synthetic only",
+  "platform_writes": 0,
+  "messages_sent": 0,
+  "payments": 0,
+  "checks": [
+    {
+      "name": "Shopify installed-app read access",
+      "passed": true,
+      "read_access": true
+    },
+    {
+      "name": "Shopify protected order query",
+      "passed": true,
+      "query_completed": true
+    },
+    {
+      "name": "Feishu application authentication",
+      "passed": true,
+      "application_authentication": true
+    },
+    {
+      "name": "DeepSeek bounded structured analysis",
+      "passed": true,
+      "schema_validated": true,
+      "evidence_validated": true,
+      "format": "json",
+      "attempts": 1
+    }
+  ],
+  "passed": true
+}

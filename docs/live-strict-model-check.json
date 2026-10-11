@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-11T21:05:38.647228+00:00",
+  "scope": "read-only connectivity; not full event or business acceptance",
+  "model_input": "synthetic only",
+  "platform_writes": 0,
+  "messages_sent": 0,
+  "payments": 0,
+  "checks": [
+    {
+      "name": "DeepSeek bounded structured analysis",
+      "passed": true,
+      "schema_validated": true,
+      "evidence_validated": true,
+      "format": "strict_tools",
+      "attempts": 1
+    }
+  ],
+  "passed": true
+}

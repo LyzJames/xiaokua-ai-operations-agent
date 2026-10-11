@@ -58,3 +58,26 @@ def test_postgres_durable_job_recovery(pg):
     with db.transaction() as c:c.execute(update(jobs).where(jobs.c.id==claimed['id']).values(lease_until=clock()-1))
     w.recover()
     assert db.get(jobs,claimed['id'],t)['status']=='queued'
+
+
+def test_postgres_parallel_role_journal_survives_database_reopen(pg):
+    from backend.production.workflows import Operations
+    from backend.production.analysis import AnalysisRunner
+    from backend.production.database import analysis_steps
+    db,t=pg
+    task=Operations(db,None,None).submit({'id':'synthetic-pg-operator','tenant_id':t},
+        '分析合成订单与库存','analyze',{'use_ai':True})
+    calls=[]
+    def model(system,context,evidence):
+        calls.append(context)
+        return {'finding':'当前没有同步业务数据，不能判断真实情况。','evidence':[],
+            'limitations':['无同步快照。']},{'attempts':1,'input_tokens':40,'output_tokens':20,'reused':False}
+    first=AnalysisRunner(db,model).run(task)
+    assert len(calls)==3 and first['analysis']['completed_roles']==3
+    reopened=Database(db.url)
+    try:
+        second=AnalysisRunner(reopened,model).run(task)
+        assert len(calls)==3 and second['analysis']['reused_roles']==3
+        assert len(reopened.list(analysis_steps,t,task_id=task['id']))==3
+        assert reopened.verify(t)['valid']
+    finally:reopened.engine.dispose()

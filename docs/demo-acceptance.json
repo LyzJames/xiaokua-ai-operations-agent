@@ -1,10 +1,10 @@
 {
-  "schema": 1,
-  "captured_at": "2026-10-11T17:08:39.374794+00:00",
+  "schema": 2,
+  "captured_at": "2026-10-11T21:24:19.232895+00:00",
   "synthetic": true,
   "platform_http_calls": 0,
   "model_http_calls": 0,
-  "checks_passed": 29,
+  "checks_passed": 33,
   "checks": [
     {
       "name": "unauthenticated outbox denied",
@@ -91,11 +91,27 @@
       "passed": true
     },
     {
+      "name": "portable skill bundle contains SKILL.md and references",
+      "passed": true
+    },
+    {
       "name": "three role reports explicitly use rules",
       "passed": true
     },
     {
+      "name": "native role graph exposes complete progress with no model calls",
+      "passed": true
+    },
+    {
+      "name": "role results are persisted independently",
+      "passed": true
+    },
+    {
       "name": "German query excludes French knowledge",
+      "passed": true
+    },
+    {
+      "name": "knowledge context follows bounded metadata-first retrieval",
       "passed": true
     },
     {

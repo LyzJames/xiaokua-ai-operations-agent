@@ -2,6 +2,8 @@
 import argparse
 import csv
 import json
+import io
+import zipfile
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -13,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 import httpx
 from fastapi.testclient import TestClient
 from backend.demo import create_demo, DEMO_PASSWORD, DEMO_ORG, SHOP_CONNECTION
-from backend.production.database import actions, tasks, jobs
+from backend.production.database import actions, tasks, jobs, analysis_steps
 
 
 def run():
@@ -109,13 +111,20 @@ def run():
                 assert post('/knowledge/'+note['id']+'/toggle', {'active':True}).status_code == 200
             skill = client.get('/api/knowledge/'+notes[0]['id']+'/download')
             check('skill export contains evidence and market', skill.status_code == 200 and '## 证据' in skill.text and 'market:' in skill.text)
+            package = client.get('/api/knowledge/'+notes[0]['id']+'/bundle')
+            with zipfile.ZipFile(io.BytesIO(package.content)) as archive:
+                paths=archive.namelist()
+                check('portable skill bundle contains SKILL.md and references', package.status_code==200 and len(paths)==2 and paths[0].endswith('/SKILL.md') and paths[1].endswith('/references/evidence.md'))
             response = post('/demo/events', {'text':'分析德国客户的能效咨询'})
             assert response.status_code == 200, response.text
             drain()
             task = db.list(tasks, DEMO_ORG, 1)[0]
             check('three role reports explicitly use rules', len(task['result']['reports']) == 3 and all(r['mode'] == 'rules' for r in task['result']['reports']))
+            check('native role graph exposes complete progress with no model calls', task['result']['analysis']['completed_roles']==3 and task['result']['analysis']['model_attempts_this_run']==0)
+            check('role results are persisted independently', len(db.list(analysis_steps,DEMO_ORG,task_id=task['id']))==3)
             selected = task['result']['statistics']['knowledge']
             check('German query excludes French knowledge', len(selected) == 1 and selected[0]['title'].startswith('DE '))
+            check('knowledge context follows bounded metadata-first retrieval', task['result']['retrieval']['strategy']=='metadata_then_body' and task['result']['retrieval']['selected']==1)
             report = client.get('/api/tasks/'+task['id']+'/report')
             check('Markdown report export succeeds', report.status_code == 200 and '客服知识 Agent' in report.text)
             audit = client.get('/api/audit/export')
@@ -131,7 +140,7 @@ def run():
                     break
             check('restart recovers queued sync and inventory', restarted.state.db.get(tasks,queued)['status'] == 'completed' and restarted.state.demo_shop.data['quantity'] == 15)
             check('audit remains valid after restart', restarted.state.db.verify(DEMO_ORG)['valid'])
-    return {'schema':1,'captured_at':datetime.now(timezone.utc).isoformat(),'synthetic':True,
+    return {'schema':2,'captured_at':datetime.now(timezone.utc).isoformat(),'synthetic':True,
         'platform_http_calls':0,'model_http_calls':0,'checks_passed':len(checks),'checks':checks}
 
 

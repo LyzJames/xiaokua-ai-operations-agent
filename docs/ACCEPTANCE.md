@@ -4,7 +4,11 @@
 
 ## 本次重新验证（2026-10-12，Asia/Shanghai）
 
-后端离线回归 77 passed、4 skipped；独立一次性 PostgreSQL 验证 4 passed，合计 81 个不同测试通过。前端 TypeScript/Vite 构建成功。合成完整流程脚本 29 项断言通过，禁止平台与模型 HTTP 请求。UI 截图重新拍摄，全部为合成数据。
+当前优化版的业务闭环、权限与安全、Agent 分析、记忆与技能、恢复与发布五类回归均通过。测试同时运行 SQLite 和一次性真实 PostgreSQL，前端构建及合成流程验收通过。分类结果见 [test-categories.json](test-categories.json)。
+
+本轮还用授权账号重新检查 Shopify 只读访问、飞书应用认证，并分别验证 DeepSeek JSON 与 strict 模式的合成输入；不发送平台消息或业务写入。摘要见 [连接检查](live-readonly-check.json) 与 [strict 检查](live-strict-model-check.json)。
+
+变化的界面已重新拍摄，未改动业务流程保留明确标注的合成基线图片。所有图片和公开结果均不含真实账号数据。
 
 这组证据可由仓库的测试、演示入口和合成 CSV 重现，不能代替真实平台权限、网络投递或模型推理质量验收。
 

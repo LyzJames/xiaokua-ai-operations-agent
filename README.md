@@ -4,9 +4,9 @@
 
 一个把运营目标变成可追踪任务、把经验变成可复用技能的 AI Agent 参考实现。工作台连接飞书与 Shopify，围绕**消息 → 持久任务 → 操作方案 → 独立审批 → 执行 → 回读 → 审计**构建闭环。
 
-**用途：技术研究、教学、二次开发。** 默认提供无需账号、密钥或外部网络调用的离线演示。公开版本包含真实平台适配代码，但不包含任何实际账户的凭据、订单、成员资料或平台截图。Amazon、Meta Ads、采购支付为后续扩展方向。
+**用途：技术研究、教学、二次开发。** 完整真实复现需要你自己的飞书应用、Shopify 开发店铺与模型 API Key；也提供无需密钥的离线演示，用于先验证业务逻辑。公开版本包含真实平台适配代码，但不包含任何实际账户的凭据、订单、成员资料或平台截图。Amazon、Meta Ads、采购支付为后续扩展方向。
 
-[完整测试报告与流程截图](docs/TEST_REPORT.md) · [真实平台接入](docs/INTEGRATIONS.md) · [架构与设计取舍](docs/RESEARCH.md) · [隐私发布说明](docs/PRIVACY.md) · [MIT 许可证](LICENSE)
+[分类测试报告与流程截图](docs/TEST_REPORT.md) · [真实平台接入](docs/INTEGRATIONS.md) · [架构与设计取舍](docs/RESEARCH.md) · [隐私发布说明](docs/PRIVACY.md) · [本轮技术调研与优化](docs/TECH_REVIEW.md) · [MIT 许可证](LICENSE)
 
 ![合成订单工作台](docs/images/04-synced-orders.jpg)
 
@@ -19,8 +19,8 @@
 | 订单处理 | 履约、物流信息更新、取消、原交易退款 | 取消不自动退款；未接入承运商轨迹；Checkout 网关未纳入本次验收 |
 | 人工审批 | 操作前后差异、独立成员审批、24 小时有效期、执行前再校验 | 所有业务写入需审批，包括小额退款；没有自动消费额度或真实 AI 钱包 |
 | 持久任务 | SQL 队列、租约、心跳、进程恢复、事件去重、只读任务重试 | 外部写入结果未知时转人工核实，禁止盲目重发 |
-| 多角色分析 | LangGraph 汇总订单、库存、客服知识三个角色的并行分析 | 没有生产记录或广告平台时，不推断制造根因或暂停真实广告 |
-| 经验沉淀 | CSV/JSON 客服记录导入、按市场/主题生成带证据的技能草稿、人工启用、Markdown 导出 | 规则识别需至少 5 条同类记录；不是对所有语言/主题的通用自动学习 |
+| 多角色分析 | LangGraph 原生并行节点、角色上下文隔离、SQL 步骤恢复、结构化输出与证据校验 | 没有生产记录或广告平台时，不推断制造根因或暂停真实广告 |
+| 经验沉淀 | CSV/JSON 客服记录导入、按市场/主题生成带证据的技能草稿、人工启用、Markdown 导出 | 规则识别需至少 5 条同类记录；市场与主题匹配后按需加载，支持标准 Agent Skills 技能包导出 |
 | 权限与审计 | 组织隔离、负责人/审批人/运营/只读角色、会话与 CSRF、凭据加密、追加式哈希审计链 | 数据库管理员仍有系统级控制；哈希链不是外部公证或合规认证 |
 | 部署参考 | SQLite 本机模式、PostgreSQL、非 root Docker、HTTPS/备份示例 | 未进行公网、商店分发、容量或商业 SaaS 验收 |
 
@@ -89,9 +89,13 @@ flowchart LR
     GRAPH --> MEMORY[带证据知识 / 技能 Markdown]
 ```
 
-0.2 主入口由 SQL 持久化业务状态和任务队列；LangGraph 组织分析图，三个角色在受控线程池内并行。没有额外依赖 CrewAI 或 ContextDB：在这个范围内，角色职责、事务审批和关系库知识更容易复现。`backend/engine.py` 是 0.1 的独立模拟研究模块，包含 LangGraph checkpoint 示例，不是 0.2 平台写入队列。
+0.3 主入口由 SQL 持久化业务状态和任务队列。LangGraph 使用订单、库存、客服知识三个独立并行节点，汇合后生成报告。角色只接收本职责所需数据，引用必须属于其证据范围。`analysis_steps` 保存输入指纹和已完成输出，同一只读任务恢复时可以复用成功角色；数据或知识改变后重新分析受影响部分。它是应用层步骤日志，不是 LangGraph checkpointer。
 
-离线模式通过依赖注入把 Shopify 换成持久化 `DemoShop`，把飞书发送换成本地 outbox；业务审批和 worker 使用同一套代码。分析固定使用清楚标记的规则模式。真实模式可以使用 DeepSeek 的 OpenAI 兼容 Chat Completions，模型不可用时报告标记为规则回退。`DEEPSEEK_MODEL` 应填写你的服务商实际开放的模型标识。
+默认模型格式为 JSON + 本地 Pydantic 严格校验，可用 `DEEPSEEK_ANALYSIS_FORMAT=strict_tools` 选择 DeepSeek Beta 的结构化 tool calls；这只是输出格式，不执行模型工具。每角色最多两次请求，只有短暂故障重试，失败原因和规则回退明确展示。模型只提供分析；业务写入始终经过独立审批。
+
+知识先筛选元信息，再按市场与主题加载最多四条正文。导出的技能包包含合法目录名、SKILL.md 和引用证据。没有引入 CrewAI、ContextDB、MCP 或 A2A 服务；选择依据和后续研究方向见 [技术调研](docs/TECH_REVIEW.md)。历史 `backend/engine.py` 保留独立 0.1 checkpoint 实验，不是当前平台业务队列。
+
+离线模式通过依赖注入把 Shopify 换成持久化 `DemoShop`，把飞书发送换成本地 outbox，复用正式审批和 worker。分析强制规则模式，即使本机已有密钥也不调用模型。真实模式使用你的 DeepSeek API Key；`DEEPSEEK_MODEL` 填写服务商实际开放的标识。
 
 ## 自己连接真实开发账号（可选）
 
@@ -112,26 +116,45 @@ uv run python -m backend.production.feishu_ws --connection-id YOUR_FEISHU_CONNEC
 
 ## 测试与复现
 
+验收按能力归为五类；当前优化版本的分类回归全部通过。详细用例范围、界面图片和真实账号检查见 [测试报告](docs/TEST_REPORT.md)。
+
+| 验收类别 | 验证重点 | 结果 |
+| --- | --- | --- |
+| 业务闭环 | 消息触发同步、库存、商品说明、订单履约/物流/取消/测试退款 | 通过 |
+| 权限与安全 | 组织隔离、独立审批、CSRF、测试保护、去重、不可改审计 | 通过 |
+| Agent 分析 | 原生角色并行、上下文隔离、Schema 和引用校验、有限重试与回退 | 通过 |
+| 记忆与技能 | 带证据学习、草稿核对、地区/主题匹配、加载预算、标准技能包 | 通过 |
+| 恢复与发布 | SQL 队列与角色恢复、PostgreSQL 并发、前端构建、公开文件隐私检查 | 通过 |
+
+默认本机回归和完整合成业务验收：
+
 ```bash
-uv run pytest -q
+uv run pytest -q --category-report data/test-categories.json
+uv run python scripts/summarize_tests.py data/test-categories.json
 uv run python scripts/demo_acceptance.py
 cd frontend
 npm run build
+cd ..
 ```
 
-本次本机结果：**77 passed、4 skipped**；这 4 项为未选择 PostgreSQL 运行时的测试。另用一次性真实 PostgreSQL 运行后 **4 passed**，合计 81 个不同测试通过。完整离线业务验收由 `scripts/demo_acceptance.py` 输出断言结果，使用临时合成数据库，不读入平台凭据。
-
-PostgreSQL 测试可选（需要 Docker，使用任务专属的临时数据库）：
+默认回归使用 SQLite；未提供 PostgreSQL 时，分类报告将相应类别标为部分运行，不把未运行的数据库检查视为通过。要复现包含 PostgreSQL 的完整分类验收，需要本机 Docker：
 
 ```bash
 uv run python scripts/start_test_postgres.py
-uv run python scripts/run_postgres_tests.py
+uv run python scripts/run_postgres_tests.py --full --category-report data/test-categories.json
+uv run python scripts/summarize_tests.py data/test-categories.json
 docker stop xiaokua-postgres-test
 ```
 
-CI 包含离线后端测试、PostgreSQL 测试、演示业务验收、前端构建和公开文件检查，均不需要真实平台 secret。测试报告明确区分本次可复现的合成流程与此前真实开发平台的验收摘要。
+你的平台账号与模型只读检查（不发消息、不写订单；模型请求使用合成内容，服务商会按自己的规则计费）：
 
-首次公开提交的 [GitHub Actions 验证](https://github.com/LyzJames/xiaokua-ai-operations-agent/actions/runs/38171802681) 已通过：Ubuntu 上 81 项测试、29 项完整流程断言、102 个公开文件检查，以及 Node 22 前端构建。仓库顶部徽章显示后续提交的实时状态。
+```bash
+uv run python scripts/verify_integrations.py --platforms-readonly --model
+```
+
+连接检查不是完整平台业务验收。真实消息、身份绑定、独立审批和 Shopify 测试资源的复现步骤见 [接入指南](docs/INTEGRATIONS.md)。公开仓库不包含真实平台截图或私有测试数据。
+
+[GitHub Actions](https://github.com/LyzJames/xiaokua-ai-operations-agent/actions/workflows/ci.yml) 自动运行分类回归、一次性 PostgreSQL、合成闭环、前端构建和公开文件检查，使用合成数据，不需要真实平台 secret。仓库顶部徽章显示最新提交状态。
 
 ## 目录导航
 
@@ -139,17 +162,20 @@ CI 包含离线后端测试、PostgreSQL 测试、演示业务验收、前端构
 backend/demo.py              无凭据、只监听本机的演示入口
 backend/demo_shop.py         持久化合成店铺适配器
 backend/production/api.py    工作台、权限、连接、隐私请求接口
-backend/production/workflows.py  提案、审批、执行、知识与三角色分析
+backend/production/workflows.py  提案、审批、执行与知识学习
+backend/production/analysis.py   原生图角色分析与 SQL 步骤恢复
+backend/model_runtime.py         有限模型请求、严格格式与引用校验
+backend/production/skills.py     按需检索与 Agent Skills 导出
 backend/production/worker.py SQL 队列、租约、事件及恢复
 backend/production/shopify.py    GraphQL Admin API 适配器
 backend/production/feishu*.py    消息、卡片、认证与官方 SDK 长连接
-frontend/src/production.tsx React 0.2 工作台
+frontend/src/production.tsx React 0.3 工作台
 frontend/demo/              明确标注合成数据的事件模拟台
 examples/                   仅含合成的研究输入
 scripts/                    演示验收、发布检查、备份与部署参考
 tests/                      自动化测试
 migrations/                 数据库迁移
-docs/images/                本次重新拍摄的合成流程截图
+docs/images/                基线与本轮优化的合成流程截图
 deploy/                     自行研究部署时的通用模板
 ```
 

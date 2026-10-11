@@ -53,6 +53,11 @@ events = table("events", Column("provider", String(20), nullable=False), Column(
     Column("status", String(30), nullable=False), stamp(), UniqueConstraint("provider", "connection_id", "external_id"))
 knowledge = table("knowledge", tenant(), Column("title", String(200), nullable=False), Column("market", String(20), nullable=False),
     Column("content", Text, nullable=False), Column("evidence", JSON, nullable=False), Column("active", Boolean, default=True, nullable=False), stamp())
+analysis_steps = table("analysis_steps", tenant(), Column("task_id", String(64), nullable=False),
+    Column("role", String(40), nullable=False), Column("input_digest", String(64), nullable=False),
+    Column("status", String(20), nullable=False), Column("output", JSON, nullable=False),
+    Column("attempts", Integer, nullable=False), Column("updated_at", Float, nullable=False),
+    UniqueConstraint("tenant_id", "task_id", "role"))
 rate_limits = table("rate_limits", Column("count", Integer, nullable=False), Column("reset_at", Float, nullable=False))
 runtime_workers = table("runtime_workers", Column("heartbeat", Float, nullable=False))
 

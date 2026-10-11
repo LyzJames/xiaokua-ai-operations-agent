@@ -107,7 +107,7 @@ def create_app(settings=None,client_factory=None):
         if settings.worker_enabled: worker.start()
         yield
         worker.stop();db.engine.dispose()
-    app=FastAPI(title="小跨运营官 · 商户服务",version="0.2.0",lifespan=lifespan,docs_url=None,openapi_url=None)
+    app=FastAPI(title="小跨运营官 · 商户服务",version="0.3.0",lifespan=lifespan,docs_url=None,openapi_url=None)
     app.state.db,app.state.vault,app.state.ops,app.state.feishu,app.state.worker,app.state.settings=db,vault,ops,feishu,worker,settings
     hosts=[urlparse(settings.public_url).hostname,"127.0.0.1","localhost","testserver"]
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=list(set(hosts)))
@@ -169,7 +169,7 @@ def create_app(settings=None,client_factory=None):
         return {"user":public_user(u),"csrf":csrf}
 
     @app.get("/api/health")
-    def health(): return {"ok":True,"mode":"production-pilot","version":"0.2.0"}
+    def health(): return {"ok":True,"mode":"research-prototype","version":"0.3.0"}
     @app.get("/api/ready")
     def ready():
         try:
@@ -325,6 +325,11 @@ def create_app(settings=None,client_factory=None):
         task=get_task(task_id,request)
         text=f"# 小跨运营报告\n\n任务：{task['command']}\n\n状态：{task['status']}\n\n{task['result'].get('summary','')}\n"
         for r in task['result'].get('reports',[]):text+=f"\n## {r['role']}\n\n{r['finding']}\n\n证据：{', '.join(r['evidence'])}\n\n模式：{r['mode']}\n"
+        if task['result'].get('analysis'):
+            text+='\n## 执行与上下文\n\n```json\n'+json.dumps({k:task['result'][k] for k in ('analysis','retrieval') if k in task['result']},ensure_ascii=False,indent=2)+'\n```\n'
+        for r in task['result'].get('reports',[]):
+            if r.get('limitations'):text+='\n### '+r['role']+' · 证据缺口\n\n'+'\n'.join('- '+v for v in r['limitations'])+'\n'
+            if r.get('fallback_reason'):text+='\n回退原因：'+r['fallback_reason']+'\n'
         return PlainTextResponse(text,headers={"Content-Disposition":f'attachment; filename="{task_id}.md"'})
 
     @app.post("/api/knowledge",status_code=201)
@@ -359,8 +364,16 @@ def create_app(settings=None,client_factory=None):
     def download_skill(skill_id:str,request:Request):
         u=actor(request);k=db.get(knowledge,skill_id,u["tenant_id"])
         if not k: raise HTTPException(404,"技能不存在")
-        content=f"---\nname: {k['id']}\nmarket: {k['market']}\n---\n\n# {k['title']}\n\n{k['content']}\n\n## 证据\n"+"\n".join("- "+x for x in k["evidence"])
-        return PlainTextResponse(content,headers={"Content-Disposition":f'attachment; filename="{skill_id}-SKILL.md"'})
+        from .skills import markdown,skill_name
+        return PlainTextResponse(markdown(k),headers={"Content-Disposition":f'attachment; filename="{skill_name(k)}-SKILL.md"'})
+
+    @app.get("/api/knowledge/{skill_id}/bundle")
+    def download_skill_bundle(skill_id:str,request:Request):
+        u=actor(request);k=db.get(knowledge,skill_id,u["tenant_id"])
+        if not k: raise HTTPException(404,"技能不存在")
+        from .skills import bundle
+        name,content=bundle(k)
+        return Response(content,media_type="application/zip",headers={"Content-Disposition":f'attachment; filename="{name}.zip"'})
 
     @app.post("/api/settings")
     def update_settings(body:SettingsBody,request:Request):

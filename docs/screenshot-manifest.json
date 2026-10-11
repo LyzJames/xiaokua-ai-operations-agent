@@ -133,39 +133,39 @@
     },
     {
       "path": "docs/images/20-support-import.jpg",
-      "captured_at_utc": "2026-10-11T20:04:02.087438+00:00",
-      "bytes": 39844,
-      "sha256": "6cba95d146ced7da327facda6e16dceb078a495bd3a8977d6bcee64285cd6e6b"
+      "captured_at_utc": "2026-10-11T21:09:24.294186+00:00",
+      "bytes": 52839,
+      "sha256": "6afc7b8947143458d50d4a88eb78437247e155d90bb0090855f9c85ef48232ff"
     },
     {
       "path": "docs/images/21-skill-drafts.jpg",
-      "captured_at_utc": "2026-10-11T20:04:18.714847+00:00",
-      "bytes": 67279,
-      "sha256": "df5167d1793b8cb9fa25a90bac9e3e2313d4502b8cc4d02826002427a06570e4"
+      "captured_at_utc": "2026-10-11T21:11:44.751885+00:00",
+      "bytes": 68308,
+      "sha256": "bd543a374b20e353b6f3cce65932265e5df9f252cea9771c8d823758ea83791e"
     },
     {
       "path": "docs/images/22-enabled-skills.jpg",
-      "captured_at_utc": "2026-10-11T20:04:54.875550+00:00",
-      "bytes": 65365,
-      "sha256": "f14e5023aa513a01d3beddf8c833e8d66bd9d7d968a04f43d27860334838d76f"
+      "captured_at_utc": "2026-10-11T21:14:12.589848+00:00",
+      "bytes": 65799,
+      "sha256": "13c8be0d0819db88b127012b5ebe63d5037ea5fecc45ab21dae7caee66fdeb8b"
     },
     {
       "path": "docs/images/23-three-role-report.jpg",
-      "captured_at_utc": "2026-10-11T20:05:21.497125+00:00",
-      "bytes": 46342,
-      "sha256": "ebb7faabd28d6bb8c11df4e3a2f075d42f681a0ec779ce7676a45d92a1221990"
+      "captured_at_utc": "2026-10-11T21:16:09.215216+00:00",
+      "bytes": 44625,
+      "sha256": "62d6bcb3ae0f5535c090dd31323ad33aee042e433448154f791f4d5d6896cd11"
     },
     {
       "path": "docs/images/23b-german-knowledge-evidence.jpg",
-      "captured_at_utc": "2026-10-11T20:05:36.014179+00:00",
-      "bytes": 44810,
-      "sha256": "8d4bf7844023e99ef33c04642ef51aa12994a8398d97c9b623b417c496013f45"
+      "captured_at_utc": "2026-10-11T21:16:27.639354+00:00",
+      "bytes": 44040,
+      "sha256": "d3842ffe08ff93e5d6cf5475a767aafe2af71be259affc2223f10d9e099b146d"
     },
     {
       "path": "docs/images/24-feishu-analysis-completion.jpg",
-      "captured_at_utc": "2026-10-11T20:07:15.918333+00:00",
-      "bytes": 52540,
-      "sha256": "1abe6c20063d2d083ae497859250c7d9e83e3f983f33ef20a2903627a9c3e358"
+      "captured_at_utc": "2026-10-11T21:19:48.054133+00:00",
+      "bytes": 52060,
+      "sha256": "3c2bcea990a880530b52ec1715d85447ec4950bde980c6fdcbf7393fdc594f40"
     },
     {
       "path": "docs/images/25-audit-chain.jpg",
@@ -196,6 +196,12 @@
       "captured_at_utc": "2026-10-11T20:07:00.077429+00:00",
       "bytes": 52397,
       "sha256": "c43cf277acc4cfd93924101459d2af8d46dea7dd15da7d6143108d00cb632cdf"
+    },
+    {
+      "path": "docs/images/33-role-execution-records.jpg",
+      "captured_at_utc": "2026-10-11T21:16:15.435866+00:00",
+      "bytes": 42510,
+      "sha256": "65c42c37a731a45b3ac7fbcdd6b1122ea9f154cf42b5c55b24167f90b63426b2"
     }
   ]
 }

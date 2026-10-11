@@ -2,6 +2,28 @@
 
 此文档面向使用自己开发账号的研究者。离线演示无需配置这些内容；不要把演示账号用于公网服务。真实入口是 `backend.service:app`，离线入口是 `backend.demo`。
 
+## 完整真实复现：先准备自己的研究环境
+
+完整功能需要飞书自建应用、已安装 Shopify 应用的开发店铺，以及可用 DeepSeek API Key。所有凭据只放私有 `.env` 或密钥文件；原型不会替你提供平台账号。
+
+1. 按 README 安装后端依赖并构建前端，将 `.env.example` 复制为私有 `.env`。
+2. 保持 `APP_ENV=development`、`PUBLIC_URL=http://127.0.0.1:8000`、`SHOPIFY_TEST_ONLY=true`，填写你自己的平台凭据和 `DEEPSEEK_MODEL`。本机研究优先使用飞书长连接。
+3. 启动 `uv run python -m uvicorn backend.service:app --host 127.0.0.1 --port 8000 --no-access-log`，在首次设置页面读取本机 `data/setup.token` 完成组织初始化。该 token 不要公开。
+4. 邀请另一个成员作为独立审批人；同一个申请人无法批准自己的业务写入。
+5. 自己拥有并已安装应用的开发店铺，可在“平台连接”导入本机 Client Credentials 配置。面向其他商户的安装使用后文 OAuth，需要平台认可的 HTTPS 回调。
+6. 导入飞书连接或填写组织机器人配置，选择长连接。把核实过的 Open ID 绑定到组织成员，再启动 SDK 长连接进程；平台发布配置见后文。
+7. 先运行只读连接检查，再在飞书发“同步订单与库存”，在工作台查看任务与同步结果。
+8. 使用明确的测试订单和带测试标签的商品，依次提出库存、说明、履约、物流、取消或测试退款方案，由另一成员审批并回读。只读探针不会代替这些业务操作。
+9. 导入合成客服样例、生成并核对草稿、启用知识；发送“分析德国客户的能效咨询”。真实工作台使用你的模型密钥，报告区分模型分析和规则回退，并展示证据、缺口和执行记录。
+
+没有要求租用服务器。本机 Client Credentials 研究入口仅适用于平台允许的自有店铺应用；如果平台授权方式要求 HTTPS，请按其规则配置自己的回调。飞书长连接能在本机接收消息与卡片。
+
+```bash
+uv run python scripts/verify_integrations.py --platforms-readonly --model
+```
+
+探针只读平台身份/订单访问，用合成资料测试模型，不发送消息或业务写入。输出只含状态和安全错误码；不会输出店铺、App ID、成员身份或 token。
+
 ## Shopify
 
 1. 创建你自己的 Shopify 应用并安装到开发店铺。根据应用用途选择分发方式；公开分发、受保护客户数据许可及商店审核不是代码可以自动替代的步骤。
@@ -12,7 +34,7 @@
 
 权限包括订单、产品、库存、位置及商户管理的履约订单。默认查询近 30 天订单，不需要为了这个范围申请 `read_all_orders`。真实 API 使用 GraphQL Admin API `2026-10`，后续版本需自行复核字段与弃用情况。
 
-只针对自己组织已安装的开发应用，本机还提供 Client Credentials 或现有 Admin API token 的导入路径；这不能替代面向所有商户的 OAuth。服务端不把 token 返回给前端。
+只针对自己组织已安装的开发应用，工作台本机入口提供 Client Credentials 导入；已有 Admin API token 可用于只读连接探针。这不能替代面向所有商户的 OAuth。服务端不把 token 返回给前端。
 
 ### 安全验证顺序
 
@@ -51,11 +73,17 @@ uv run python -m backend.production.feishu_ws --connection-id YOUR_FEISHU_CONNEC
 
 这一路径有自动化签名测试，公开交付没有公网真实投递验收。成员 OAuth 回调仍为 `/api/feishu/callback`。聊天启动同步与分析；业务写入必须先在工作台提出结构化方案。
 
-## DeepSeek
+## DeepSeek 与结构化分析
 
-在后端私有配置设置 `DEEPSEEK_API_KEY` 与服务商实际开放的 `DEEPSEEK_MODEL`。适配器调用 `https://api.deepseek.com/chat/completions`，使用 JSON 对象响应。密钥和模型回答不进入审批权限判断。
+在私有配置设置 `DEEPSEEK_API_KEY` 与服务商实际开放的 `DEEPSEEK_MODEL`。默认 `DEEPSEEK_ANALYSIS_FORMAT=json`，请求稳定 Chat Completions 的 JSON 对象；可以改为 `strict_tools`，调用官方 Beta `/beta/chat/completions` 的 strict function schema。更改 `.env` 后重启服务。
 
-模型只辅助三个分析角色，以同步统计与已确认知识为上下文。失败时报告标记规则回退，不能声称已发生真实推理。离线 demo 强制规则模式，即使本机已有密钥也不会调用模型。真实模型计费由研究者自己的账号承担。
+两种模式都在本地检查 `finding`、`evidence`、`limitations` 的类型、长度、多余字段和证据归属。strict 模式的 `submit_analysis` 只用于承载结果，不执行工具。Beta 不接受的长度限制由本地校验器实现。非法输出、鉴权失败和限流等原因会展示为明确的规则回退，不能视作真实推理成功。
+
+每个角色最多两次请求、每次最多 1400 输出 tokens；只对短暂故障作有限重试。工作台显示服务商提供的输入/输出 tokens，没有价格或账单保证。模型内容不能批准订单或其他业务写入。
+
+离线 `backend.demo` 始终使用规则模式。真实 `backend.service` 才调用研究者的模型；模型费用由自己的账号承担，不需要另行购买编排或记忆云服务。
+
+模型探针只用合成输入。实际运行时，导入知识和客服资料应先去除个人信息；模型角色只接收受限上下文，运行结果仍属于组织私密资料。
 
 ## 隐私事件
 
@@ -73,3 +101,5 @@ Shopify 客户数据请求/删除请求进入负责人“运行设置”的人�
 - [飞书官方 Python SDK 长连接样例](https://github.com/larksuite/oapi-sdk-python/blob/v2_main/samples/ws/sample.py)
 - [飞书 Open ID 获取](https://open.feishu.cn/document/faq/trouble-shooting/how-to-obtain-openid)
 - [DeepSeek API](https://api-docs.deepseek.com/)
+
+结构化接入依据：[DeepSeek JSON Output](https://api-docs.deepseek.com/guides/json_mode/)、[strict tool calls](https://api-docs.deepseek.com/guides/tool_calls/)。

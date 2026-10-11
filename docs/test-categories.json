@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-11T21:23:00.821218+00:00",
+  "suite": "synthetic automated regression",
+  "python": "3.13.7",
+  "os": "Windows",
+  "database": "SQLite + disposable PostgreSQL",
+  "exit_code": 0,
+  "categories": [
+    {
+      "id": "business",
+      "title": "业务闭环",
+      "status": "passed",
+      "cases": {
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0,
+        "not_run": 0
+      }
+    },
+    {
+      "id": "security",
+      "title": "权限与安全",
+      "status": "passed",
+      "cases": {
+        "passed": 42,
+        "failed": 0,
+        "skipped": 0,
+        "not_run": 0
+      }
+    },
+    {
+      "id": "agent",
+      "title": "Agent 分析",
+      "status": "passed",
+      "cases": {
+        "passed": 23,
+        "failed": 0,
+        "skipped": 0,
+        "not_run": 0
+      }
+    },
+    {
+      "id": "memory",
+      "title": "记忆与技能",
+      "status": "passed",
+      "cases": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "not_run": 0
+      }
+    },
+    {
+      "id": "reliability",
+      "title": "恢复与发布",
+      "status": "passed",
+      "cases": {
+        "passed": 16,
+        "failed": 0,
+        "skipped": 0,
+        "not_run": 0
+      }
+    }
+  ]
+}
