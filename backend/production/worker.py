@@ -1,10 +1,11 @@
 import os
 import threading
 import time
-from sqlalchemy import select, update, or_
+from sqlalchemy import select, update, or_, case
 from .database import jobs, actions, tasks, connections, events, resources, tenants, runtime_workers, clock, uid, row
 from .workflows import BusinessError
 from .shopify import ShopifyError
+from .platforms.contracts import PlatformError, PROVIDERS
 from .feishu import FeishuError
 
 class Worker:
@@ -18,6 +19,7 @@ class Worker:
         self.stop_event.set()
         if self.thread: self.thread.join(timeout=35)
     def recover(self):
+        changed=[]
         with self.db.transaction() as db:
             stale=[row(r) for r in db.execute(select(jobs).where(jobs.c.status=="running",jobs.c.lease_until<clock()).with_for_update())]
             for j in stale:
@@ -27,19 +29,53 @@ class Worker:
                         db.execute(update(actions).where(actions.c.id==a["id"]).values(status="uncertain",reason="执行进程中断，须核查平台结果"))
                         db.execute(update(tasks).where(tasks.c.id==a["task_id"]).values(status="needs_review"))
                         self.db.audit(db,j["tenant_id"],"worker","action.uncertain",a["id"],{"reason":"lease_expired"})
+                        changed.append(a)
                 db.execute(update(jobs).where(jobs.c.id==j["id"]).values(status="queued",worker=None))
             expired=[row(r) for r in db.execute(select(actions).where(actions.c.status.in_(["pending","approved"]),actions.c.expires_at<clock()))]
             for a in expired:
                 db.execute(update(actions).where(actions.c.id==a["id"]).values(status="expired"))
                 db.execute(update(tasks).where(tasks.c.id==a["task_id"]).values(status="expired"))
                 self.db.audit(db,a["tenant_id"],"worker","approval.expired",a["id"],{})
+                changed.append(a)
+        for a in changed:
+            self.ops.shared.action_outcome(self.db.get(actions,a["id"],a["tenant_id"]))
+        for t in {a["tenant_id"] for a in changed}:
+            self.ops.refresh_commands(t)
 
     def claim(self):
+        stopped=[]
         with self.db.transaction() as db:
-            query=select(jobs).where(jobs.c.status=="queued",jobs.c.available_at<=clock()).order_by(jobs.c.created_at).limit(1).with_for_update(skip_locked=True)
-            job=row(db.execute(query).first())
+            query=select(jobs.c.id).where(jobs.c.status=="queued",jobs.c.available_at<=clock()).order_by(case((jobs.c.kind=="task",1),else_=0), jobs.c.created_at).limit(100)
+            job = None
+            identifiers = [value[0] for value in db.execute(query)]
+            for identifier in identifiers:
+                candidate = row(db.execute(select(jobs).where(jobs.c.id == identifier, jobs.c.status == "queued",
+                    jobs.c.available_at <= clock()).with_for_update(skip_locked=True)).first())
+                if not candidate:
+                    continue
+                if candidate["kind"] == "task":
+                    task = self.db.get(tasks, candidate["target_id"], candidate["tenant_id"], db)
+                    if not task or task["status"] not in ("queued", "running"):
+                        db.execute(update(jobs).where(jobs.c.id == candidate["id"]).values(status="done"))
+                        continue
+                    dependencies = [self.db.get(tasks, identifier, candidate["tenant_id"], db) for identifier in task["params"].get("depends_on", [])]
+                    if any(not value or value["status"] in ("failed", "rejected", "expired", "needs_review", "needs_input", "partial") for value in dependencies):
+                        db.execute(update(tasks).where(tasks.c.id == task["id"]).values(status="failed", result={"summary": "前置任务未完成或需要核实，后续操作已停止。"}))
+                        db.execute(update(jobs).where(jobs.c.id == candidate["id"]).values(status="failed", error="DEPENDENCY_NOT_SUCCESSFUL"))
+                        self.db.audit(db,candidate["tenant_id"],"worker","task.dependency.stopped",task["id"],{})
+                        stopped.append(task)
+                        continue
+                    if any(value["status"] != "completed" for value in dependencies):
+                        db.execute(update(jobs).where(jobs.c.id==candidate["id"]).values(available_at=clock()+2))
+                        continue
+                job = candidate
+                break
             if job:
                 db.execute(update(jobs).where(jobs.c.id==job["id"]).values(status="running",worker=self.identity,lease_until=clock()+90,attempts=job["attempts"]+1))
+        for task in stopped:
+            self.ops.shared.action_outcome({"tenant_id":task["tenant_id"],"task_id":task["id"],"status":"failed"})
+        for t in {task["tenant_id"] for task in stopped}:
+            self.ops.refresh_commands(t)
         return job
 
     def heartbeat(self,job_id,stop):
@@ -68,8 +104,13 @@ class Worker:
             elif job["kind"]=="notify_task": self.feishu.notify_task(target,t)
             elif job["kind"]=="feishu_event": self.feishu.event_job(target,t)
             elif job["kind"]=="shopify_event": self.shopify_event(target,t)
+            elif job["kind"]=="refresh_connection":
+                action = self.db.get(actions, target, t)
+                if action:
+                    task = self.ops.submit({"id":"readback-worker","tenant_id":t}, "操作后同步与库存核对", "sync", {}, action["connection_id"], "refresh-"+target)
+                    self.ops.process_task(task["id"], t)
             else: raise BusinessError("未知作业类型")
-        except (BusinessError,ShopifyError,FeishuError) as e:
+        except (BusinessError,PlatformError,FeishuError) as e:
             status,error="failed",str(e)[:300]
             if job["kind"]=="action":
                 a=self.db.get(actions,job["target_id"],job["tenant_id"])
@@ -79,6 +120,7 @@ class Worker:
             halt.set();pulse.join(timeout=2)
             with self.db.transaction() as db:
                 db.execute(update(jobs).where(jobs.c.id==job["id"],jobs.c.worker==self.identity).values(status=status,error=error,lease_until=0))
+            self.ops.refresh_commands(job["tenant_id"])
         return True
 
     def shopify_event(self,event_id,t):
@@ -91,6 +133,7 @@ class Worker:
                 db.execute(resources.delete().where(resources.c.connection_id==conn["id"],resources.c.tenant_id==t))
                 db.execute(update(actions).where(actions.c.connection_id==conn["id"],actions.c.tenant_id==t,actions.c.status.in_(["pending","approved"])).values(status="rejected",reason="店铺已卸载或请求删除"))
                 self.db.audit(db,t,"shopify","shopify.revoked",conn["id"],{"topic":ev["topic"]})
+            self.ops.shared.disconnect(t, conn["id"])
         elif ev["topic"] not in ("customers/data_request","customers/redact"):
             # Query current state, rather than trust webhook order or persist customer payloads.
             actor={"id":"shopify-webhook","tenant_id":t}
@@ -115,7 +158,9 @@ class Worker:
             if not config.get("sync_enabled"):continue
             interval=config.get("sync_interval_minutes",30)*60
             if clock()-config.get("last_schedule",0)<interval:continue
-            for con in self.db.list(connections,tenant["id"],100,provider="shopify",status="active"):
+            for con in self.db.list(connections,tenant["id"],100,status="active"):
+                if con["provider"] not in PROVIDERS or not PROVIDERS[con["provider"]].operations:
+                    continue
                 self.ops.submit({"id":"scheduler","tenant_id":tenant["id"]},"定时同步店铺","sync",{},con["id"],"schedule-"+con["id"]+"-"+str(int(clock()//interval)))
             with self.db.transaction() as db:
                 current=row(db.execute(select(tenants).where(tenants.c.id==tenant["id"]).with_for_update()).first())

@@ -4,14 +4,15 @@ import httpx
 from sqlalchemy import select, update
 from .database import connections, resources, clock, uid, row
 from .security import shop_domain
+from .platforms.contracts import PlatformError
 
 API_VERSION = "2026-10"
 SCOPES = "read_orders,write_orders,read_products,write_products,read_inventory,write_inventory,read_locations,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders"
 
-class ShopifyError(Exception):
+class ShopifyError(PlatformError):
     def __init__(self, code, unknown=False):
-        self.code, self.unknown = code, unknown
-        super().__init__("Shopify 请求未完成："+code)
+        super().__init__(code, unknown)
+        self.args = ("Shopify 请求未完成："+code,)
 
 def exchange(domain, values):
     domain = shop_domain(domain)
@@ -74,8 +75,9 @@ class Shopify:
         return self.paged('''query($cursor:String,$search:String){orders(first:100,after:$cursor,query:$search,sortKey:CREATED_AT){nodes{
           id name test createdAt updatedAt cancelledAt tags currencyCode displayFinancialStatus displayFulfillmentStatus
           totalPriceSet{shopMoney{amount currencyCode}} totalRefundedSet{shopMoney{amount currencyCode}}
-          netPaymentSet{shopMoney{amount currencyCode}} fulfillments{id status trackingInfo{number company url}}
-          lineItems(first:100){nodes{id quantity variant{id product{id}}} pageInfo{hasNextPage}}
+          netPaymentSet{shopMoney{amount currencyCode}} fulfillments{id status trackingInfo{number company url}
+            fulfillmentLineItems(first:100){nodes{quantity lineItem{id}} pageInfo{hasNextPage}}}
+          lineItems(first:100){nodes{id quantity sku variant{id product{id}}} pageInfo{hasNextPage}}
         } pageInfo{hasNextPage endCursor}}}''',"orders",{"search":search})
 
     def variants(self):
@@ -85,9 +87,10 @@ class Shopify:
         } pageInfo{hasNextPage endCursor}}}''',"productVariants")
 
     def order(self, order_id):
-        data = self.gql('''query($id:ID!){order(id:$id){id name test tags cancelledAt currencyCode displayFinancialStatus displayFulfillmentStatus
+        data = self.gql('''query($id:ID!){order(id:$id){id name test tags updatedAt cancelledAt currencyCode displayFinancialStatus displayFulfillmentStatus
           totalPriceSet{shopMoney{amount currencyCode}} totalRefundedSet{shopMoney{amount currencyCode}} netPaymentSet{shopMoney{amount currencyCode}}
           transactions{id kind status gateway test amountSet{shopMoney{amount currencyCode}} parentTransaction{id}}
+          lineItems(first:100){nodes{id quantity sku variant{id}} pageInfo{hasNextPage}}
           fulfillments{id status trackingInfo{number company url}}
           refunds{id note transactions(first:100){nodes{id status amountSet{shopMoney{amount currencyCode}}}}}
           fulfillmentOrders(first:100){nodes{id status supportedActions{action} lineItems(first:100){nodes{id remainingQuantity} pageInfo{hasNextPage}}} pageInfo{hasNextPage}}

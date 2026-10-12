@@ -61,6 +61,32 @@ analysis_steps = table("analysis_steps", tenant(), Column("task_id", String(64),
 rate_limits = table("rate_limits", Column("count", Integer, nullable=False), Column("reset_at", Float, nullable=False))
 runtime_workers = table("runtime_workers", Column("heartbeat", Float, nullable=False))
 
+inventory_pools = table("inventory_pools", tenant(), Column("name", String(120), nullable=False),
+    Column("sku", String(100), nullable=False), Column("warehouse", String(100), nullable=False),
+    Column("pool_type", String(20), nullable=False), Column("on_hand", Integer, nullable=False),
+    Column("safety", Integer, nullable=False), Column("version", Integer, nullable=False),
+    Column("initialized", Boolean, nullable=False), Column("frozen", Boolean, nullable=False),
+    Column("issues", JSON, nullable=False), stamp(), UniqueConstraint("tenant_id", "warehouse", "sku"))
+sku_mappings = table("sku_mappings", tenant(), Column("pool_id", String(64), nullable=False),
+    Column("connection_id", String(64), nullable=False), Column("variant_id", String(254), nullable=False),
+    Column("item_id", String(254), nullable=False), Column("location_id", String(254), nullable=False),
+    Column("quota", Integer, nullable=False), stamp(), UniqueConstraint("connection_id", "variant_id", "location_id"))
+inventory_positions = table("inventory_positions", tenant(), Column("pool_id", String(64), nullable=False),
+    Column("connection_id", String(64), nullable=False), Column("order_id", String(254), nullable=False),
+    Column("line_id", String(254), nullable=False), Column("ordered", Integer, nullable=False),
+    Column("shipped", Integer, nullable=False), Column("reserved", Integer, nullable=False),
+    Column("source_time", String(64), nullable=False), Column("fingerprint", String(64), nullable=False),
+    Column("updated_at", Float, nullable=False), stamp(), UniqueConstraint("connection_id", "order_id", "line_id"))
+stock_journal = table("stock_journal", tenant(), Column("pool_id", String(64), nullable=False),
+    Column("kind", String(30), nullable=False), Column("delta", Integer, nullable=False),
+    Column("on_hand_after", Integer, nullable=False), Column("reserved_after", Integer, nullable=False),
+    Column("reference", String(254), nullable=False), Column("idem", String(120), nullable=False),
+    stamp(), UniqueConstraint("tenant_id", "idem"))
+stock_plans = table("stock_plans", tenant(), Column("pool_id", String(64), nullable=False),
+    Column("actor_id", String(64), nullable=False), Column("version", Integer, nullable=False),
+    Column("steps", JSON, nullable=False), Column("status", String(30), nullable=False),
+    Column("expires_at", Float, nullable=False), stamp())
+
 def uid(prefix="id"): return prefix + "_" + uuid.uuid4().hex
 def clock(): return time.time()
 def canonical(v): return json.dumps(v, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -83,10 +109,13 @@ class Database:
             if self.engine.dialect.name == "sqlite":
                 for op in ("UPDATE", "DELETE"):
                     db.exec_driver_sql(f"CREATE TRIGGER IF NOT EXISTS audit_no_{op.lower()} BEFORE {op} ON audits BEGIN SELECT RAISE(ABORT,'append-only audit'); END;")
+                    db.exec_driver_sql(f"CREATE TRIGGER IF NOT EXISTS stock_no_{op.lower()} BEFORE {op} ON stock_journal BEGIN SELECT RAISE(ABORT,'append-only stock journal'); END;")
             elif self.engine.dialect.name == "postgresql":
                 db.exec_driver_sql("CREATE OR REPLACE FUNCTION xiaokua_audit_guard() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'append-only audit'; END; $$;")
                 db.exec_driver_sql("DROP TRIGGER IF EXISTS audit_append_only ON audits")
                 db.exec_driver_sql("CREATE TRIGGER audit_append_only BEFORE UPDATE OR DELETE ON audits FOR EACH ROW EXECUTE FUNCTION xiaokua_audit_guard()")
+                db.exec_driver_sql("DROP TRIGGER IF EXISTS stock_append_only ON stock_journal")
+                db.exec_driver_sql("CREATE TRIGGER stock_append_only BEFORE UPDATE OR DELETE ON stock_journal FOR EACH ROW EXECUTE FUNCTION xiaokua_audit_guard()")
 
     @contextmanager
     def transaction(self):

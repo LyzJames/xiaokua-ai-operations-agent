@@ -14,13 +14,16 @@ from sqlalchemy import select, update, func
 from sqlalchemy.exc import IntegrityError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .database import (Database, tenants, users, sessions, invitations, connections, oauth_states,
-                       tasks, actions, resources, audits, jobs, events, knowledge, runtime_workers, clock, uid, row)
+                       tasks, actions, resources, audits, jobs, events, knowledge, runtime_workers, inventory_pools, clock, uid, row)
 from .security import Settings, Vault, ROLES, digest, password_hash, password_ok, shop_domain, shopify_query_hmac, body_hmac
 from .shopify import SCOPES, Shopify, ShopifyError, exchange
 from .workflows import Operations, BusinessError, redact
 from .feishu import Feishu, FeishuError, tenant_token, feishu_request, verify_event
 from .worker import Worker
 from ..config import ROOT, credentials
+from .platforms.contracts import PlatformError, PROVIDERS, normalize_resource
+from .platforms.registry import connection_capabilities
+from .commands import submit_command
 
 class AuthBody(BaseModel):
     email:str=Field(min_length=3,max_length=254)
@@ -50,9 +53,45 @@ class TaskBody(BaseModel):
     params:dict=Field(default_factory=dict)
     connection_id:str|None=None
     idempotency_key:str|None=Field(default=None,max_length=120)
+
+WRITE_FIELDS = {"inventory": {"item_id","location_id","quantity"}, "product": {"product_id","description"},
+    "fulfill": {"order_id","company","number"}, "tracking": {"order_id","fulfillment_id","company","number"},
+    "cancel": {"order_id","reason"}, "refund": {"order_id","amount","currency"}, "pool_adjust": {"pool_id","quantity","safety"},
+    "sandbox_sku": {"sku"}, "sandbox_stock": {"sku","quantity"}, "mcf_create": {"sku","quantity"}, "mcf_cancel": {"order_id"},
+    "sandbox_status": {"order_id","status"}, "sandbox_package": {"order_id","package_id","status"}}
 class DecisionBody(BaseModel):
     approved:bool
     note:str=Field(default="",max_length=500)
+class CommandBody(BaseModel):
+    model_config = {"extra": "forbid", "strict": True}
+    command: str = Field(min_length=1, max_length=2000)
+    connection_ids: list[str] = Field(min_length=1, max_length=20)
+    idempotency_key: str = Field(min_length=1, max_length=120)
+    use_ai: bool = True
+class AmazonConnect(BaseModel):
+    model_config = {"extra": "forbid", "strict": True}
+    label: str = Field(default="Amazon 店铺", min_length=1, max_length=120)
+    region: Literal["na", "eu", "fe"] = "na"
+    environment: Literal["sandbox", "production"] = "sandbox"
+    marketplace_id: str = Field(default="ATVPDKIKX0DER", min_length=5, max_length=30)
+    client_id: str = Field(min_length=10, max_length=500)
+    client_secret: str = Field(min_length=10, max_length=2048)
+    refresh_token: str = Field(min_length=10, max_length=2048)
+class PoolBody(BaseModel):
+    model_config = {"extra": "forbid", "strict": True}
+    name: str = Field(min_length=1, max_length=120)
+    sku: str = Field(min_length=1, max_length=100)
+    warehouse: str = Field(min_length=1, max_length=100)
+    safety: int = Field(default=5, ge=0, le=1000000)
+    pool_type: Literal["merchant", "platform"] = "merchant"
+class MappingBody(BaseModel):
+    model_config = {"extra": "forbid", "strict": True}
+    connection_id: str
+    variant_id: str = Field(min_length=1, max_length=254)
+    location_id: str = Field(min_length=1, max_length=254)
+class AllocationBody(BaseModel):
+    model_config = {"extra": "forbid", "strict": True}
+    targets: dict[str, int]
 class ReconcileBody(BaseModel):
     note:str=Field(min_length=1,max_length=500)
 class PrivacyBody(ReconcileBody):
@@ -107,7 +146,7 @@ def create_app(settings=None,client_factory=None):
         if settings.worker_enabled: worker.start()
         yield
         worker.stop();db.engine.dispose()
-    app=FastAPI(title="小跨运营官 · 商户服务",version="0.3.0",lifespan=lifespan,docs_url=None,openapi_url=None)
+    app=FastAPI(title="小跨运营官 · 多平台商户服务",version="0.4.0",lifespan=lifespan,docs_url=None,openapi_url=None)
     app.state.db,app.state.vault,app.state.ops,app.state.feishu,app.state.worker,app.state.settings=db,vault,ops,feishu,worker,settings
     hosts=[urlparse(settings.public_url).hostname,"127.0.0.1","localhost","testserver"]
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=list(set(hosts)))
@@ -152,6 +191,7 @@ def create_app(settings=None,client_factory=None):
     @app.exception_handler(IntegrityError)
     async def conflict(request,error): return JSONResponse({"detail":"记录已存在或发生并发冲突，请刷新后重试"},409)
     @app.exception_handler(ShopifyError)
+    @app.exception_handler(PlatformError)
     @app.exception_handler(FeishuError)
     async def platform_error(request,error): return JSONResponse({"detail":str(error)},400)
 
@@ -169,7 +209,7 @@ def create_app(settings=None,client_factory=None):
         return {"user":public_user(u),"csrf":csrf}
 
     @app.get("/api/health")
-    def health(): return {"ok":True,"mode":"research-prototype","version":"0.3.0"}
+    def health(): return {"ok":True,"mode":"commerce-agent","version":"0.4.0"}
     @app.get("/api/ready")
     def ready():
         try:
@@ -270,9 +310,16 @@ def create_app(settings=None,client_factory=None):
     def state(request:Request):
         u=actor(request);t=u["tenant_id"]
         cs=db.list(connections,t)
-        for con in cs: con.pop("secret")
+        for con in cs:
+            con.pop("secret")
+            con["capabilities"] = connection_capabilities(con)
         with db.engine.connect() as c:
             rs=[row(r) for r in c.execute(select(resources).where(resources.c.tenant_id==t,resources.c.kind.in_(["order","variant"])).limit(10000))]
+        connection_map = {con["id"]: con for con in cs}
+        for resource in rs:
+            con = connection_map.get(resource["connection_id"])
+            if con and con["provider"] in PROVIDERS:
+                resource["normalized"] = normalize_resource(con["provider"], resource["kind"], resource["data"], con["info"].get("demo", False))
         members=[public_user(x) for x in db.list(users,t)] if u["role"]=="owner" else []
         with db.engine.connect() as c:
             privacy=[row(r) for r in c.execute(select(events).join(connections,connections.c.id==events.c.connection_id).where(connections.c.tenant_id==t,events.c.topic.in_(["customers/data_request","customers/redact"])).order_by(events.c.created_at.desc()).limit(100))] if u["role"]=="owner" else []
@@ -280,12 +327,45 @@ def create_app(settings=None,client_factory=None):
             "orders":[r for r in rs if r["kind"]=="order"],"variants":[r for r in rs if r["kind"]=="variant"],
             "tasks":db.list(tasks,t,100),"actions":db.list(actions,t,100),"knowledge":db.list(knowledge,t,200),
             "members":members,"audit":db.list(audits,t,100),"audit_verification":db.verify(t),"jobs":db.list(jobs,t,60),
-            "privacy_requests":privacy,"reserved":["Amazon","Meta Ads","采购支付"],"deployment":{"database":db.engine.dialect.name,"https":settings.public_url.startswith("https://"),"worker_enabled":settings.worker_enabled}}
+            "privacy_requests":privacy,"reserved":["Meta Ads","采购支付"],"platforms":[spec.public() for spec in PROVIDERS.values()],
+            "shared_inventory":ops.shared.state(t),"deployment":{"database":db.engine.dialect.name,"https":settings.public_url.startswith("https://"),"worker_enabled":settings.worker_enabled}}
+
+    @app.post("/api/commands", status_code=201)
+    def command(body: CommandBody, request: Request):
+        u = actor(request, "operator")
+        if db.limited(digest("tasks:"+u["tenant_id"]), 60, 60):
+            raise HTTPException(429, "任务提交过于频繁")
+        return submit_command(ops, u, redact(body.command), body.connection_ids, "web", body.idempotency_key,
+            use_ai=body.use_ai and not getattr(app.state, "demo", False))
+
+    @app.post("/api/stock/pools", status_code=201)
+    def pool_create(body: PoolBody, request: Request):
+        return ops.shared.create_pool(actor(request, "owner"), **body.model_dump())
+
+    @app.post("/api/stock/pools/{pool_id}/mappings", status_code=201)
+    def mapping_create(pool_id: str, body: MappingBody, request: Request):
+        return ops.shared.add_mapping(actor(request, "owner"), pool_id, **body.model_dump())
+
+    @app.post("/api/stock/pools/{pool_id}/allocate", status_code=201)
+    def stock_allocate(pool_id: str, body: AllocationBody, request: Request):
+        return ops.shared.create_plan(actor(request, "operator"), pool_id, body.targets)
+
+    @app.post("/api/stock/plans/{plan_id}/close")
+    def close_allocation(plan_id: str, body: ReconcileBody, request: Request):
+        return ops.shared.close_plan(actor(request, "owner"), plan_id, body.note)
+
+    @app.post("/api/stock/pools/{pool_id}/clear-freeze")
+    def stock_clear(pool_id: str, body: ReconcileBody, request: Request):
+        return ops.shared.clear_freeze(actor(request, "owner"), pool_id, body.note)
 
     @app.post("/api/tasks",status_code=201)
     def submit(body:TaskBody,request:Request):
         u=actor(request,"operator")
         if db.limited(digest("tasks:"+u["tenant_id"]),60,60): raise HTTPException(429,"任务提交过于频繁")
+        if any(key.startswith("_") or key in ("depends_on", "parent_command", "entrypoint") for key in body.params):
+            raise BusinessError("任务内部字段只能由服务端生成")
+        if body.kind in WRITE_FIELDS and set(body.params) - WRITE_FIELDS[body.kind]:
+            raise BusinessError("操作包含未开放的业务参数，请使用工作台表单")
         return ops.submit(u,redact(body.command),body.kind,body.params,body.connection_id,body.idempotency_key)
     @app.get("/api/tasks/{task_id}")
     def get_task(task_id:str,request:Request):
@@ -312,10 +392,13 @@ def create_app(settings=None,client_factory=None):
     def verify_action(action_id:str,request:Request):
         u=actor(request,"approver");a=db.get(actions,action_id,u["tenant_id"])
         if not a: raise HTTPException(404,"操作不存在")
-        api=ops.client(a["connection_id"],u["tenant_id"]);p=a["payload"]
-        if a["kind"] in ("refund","fulfill","tracking","cancel"): observed=api.order(p["order_id"])
-        elif a["kind"]=="inventory": observed=api.inventory(p["item_id"],p["location_id"])
-        else: observed=api.product(p["product_id"])
+        expected = a["before"].get("quantity", 0) + a["payload"].get("quantity", 0) if a["kind"] == "sandbox_stock" else None
+        p = dict(a["payload"], _action_id=action_id, _expected_quantity=a["result"].get("expected_quantity", expected))
+        if a["kind"] == "pool_adjust":
+            observed = db.get(inventory_pools, p["pool_id"], u["tenant_id"])
+        else:
+            matched, proof = ops.client(a["connection_id"],u["tenant_id"]).verify_action(a["kind"], p)
+            observed = {"matches_target": matched, **proof}
         return {"status":a["status"],"observed":observed,"message":"只读核实结果；待核实操作不会再次自动发送。请与平台日志核对。"}
     @app.post("/api/actions/{action_id}/reconcile")
     def reconcile(action_id:str,body:ReconcileBody,request:Request):
@@ -327,6 +410,10 @@ def create_app(settings=None,client_factory=None):
         for r in task['result'].get('reports',[]):text+=f"\n## {r['role']}\n\n{r['finding']}\n\n证据：{', '.join(r['evidence'])}\n\n模式：{r['mode']}\n"
         if task['result'].get('analysis'):
             text+='\n## 执行与上下文\n\n```json\n'+json.dumps({k:task['result'][k] for k in ('analysis','retrieval') if k in task['result']},ensure_ascii=False,indent=2)+'\n```\n'
+        for child in task["result"].get("children", []):
+            detail = db.get(tasks, child["id"], task["tenant_id"])
+            if detail:
+                text += f"\n## 店铺子任务 {detail['id']}\n\n类型：{detail['kind']} · 状态：{detail['status']}\n\n{detail['result'].get('summary', '')}\n"
         for r in task['result'].get('reports',[]):
             if r.get('limitations'):text+='\n### '+r['role']+' · 证据缺口\n\n'+'\n'.join('- '+v for v in r['limitations'])+'\n'
             if r.get('fallback_reason'):text+='\n回退原因：'+r['fallback_reason']+'\n'
@@ -426,6 +513,44 @@ def create_app(settings=None,client_factory=None):
         query=urlencode({"client_id":keys["SHOPIFY_CLIENT_ID"],"scope":SCOPES,"redirect_uri":settings.public_url+"/api/shopify/callback","state":nonce})
         return {"url":f"https://{domain}/admin/oauth/authorize?{query}"}
 
+    def save_amazon(u, body):
+        if getattr(app.state, "demo", False):
+            raise BusinessError("本机演示禁止真实平台凭据导入")
+        from .platforms.amazon import AmazonAdapter
+        secret = {"client_id": body.client_id, "client_secret": body.client_secret, "refresh_token": body.refresh_token}
+        info = {"label": body.label, "region": body.region, "marketplace_id": body.marketplace_id, "environment": body.environment}
+        api = AmazonAdapter(secret, info)
+        api.token()
+        api.inventory_summaries()
+        info["capabilities"] = api.capabilities()
+        external = body.environment+":"+body.region+":"+body.marketplace_id+":"+digest(body.refresh_token)[:28]
+        with db.transaction() as c:
+            existing = row(c.execute(select(connections).where(connections.c.provider == "amazon", connections.c.external_id == external).with_for_update()).first())
+            if existing and existing["tenant_id"] != u["tenant_id"]:
+                raise BusinessError("该店铺凭据已由另一个组织绑定")
+            values = {"secret": vault.seal(secret), "status": "active", "info": info}
+            if existing:
+                identifier = existing["id"]
+                c.execute(update(connections).where(connections.c.id == identifier).values(**values))
+            else:
+                identifier = uid("conn")
+                c.execute(connections.insert().values(id=identifier, tenant_id=u["tenant_id"], provider="amazon", external_id=external, created_at=clock(), **values))
+            db.audit(c, u["tenant_id"], u["id"], "amazon.connected", identifier, {"region": body.region, "marketplace_id": body.marketplace_id, "environment": body.environment})
+        return {"id": identifier, "provider": "amazon", "capabilities": api.capabilities()}
+
+    @app.post("/api/amazon/connect", status_code=201)
+    def connect_amazon(body: AmazonConnect, request: Request):
+        return save_amazon(actor(request, "owner"), body)
+
+    @app.post("/api/amazon/import-local", status_code=201)
+    def import_amazon(request: Request):
+        u = actor(request, "owner")
+        if settings.production:
+            raise BusinessError("生产环境请显式录入商户自己的授权凭据")
+        keys = credentials()
+        return save_amazon(u, AmazonConnect(client_id=keys.get("AMAZON_LWA_CLIENT_ID", ""), client_secret=keys.get("AMAZON_LWA_CLIENT_SECRET", ""),
+            refresh_token=keys.get("AMAZON_REFRESH_TOKEN", ""), region=os.getenv("AMAZON_REGION", "na"), marketplace_id=os.getenv("AMAZON_MARKETPLACE_ID", "ATVPDKIKX0DER")))
+
     @app.get("/api/shopify/callback")
     def callback(request:Request):
         if len(request.query_params.multi_items())!=len(set(request.query_params.keys())): raise HTTPException(403,"重复授权参数")
@@ -453,6 +578,10 @@ def create_app(settings=None,client_factory=None):
             c.execute(resources.delete().where(resources.c.connection_id==connection_id,resources.c.tenant_id==u["tenant_id"]))
             c.execute(update(actions).where(actions.c.connection_id==connection_id,actions.c.status.in_(["pending","approved"])).values(status="rejected",reason="连接已解除"))
             db.audit(c,u["tenant_id"],u["id"],"connection.revoked",connection_id,{})
+            c.execute(update(tasks).where(tasks.c.connection_id == connection_id, tasks.c.tenant_id == u["tenant_id"],
+                tasks.c.status.in_(["queued", "running", "awaiting_approval"])).values(status="failed", result={"summary": "连接已解除，待执行任务已停止"}))
+        ops.shared.disconnect(u["tenant_id"], connection_id)
+        ops.refresh_commands(u["tenant_id"])
         return {"ok":True}
 
     @app.post("/hooks/shopify")
