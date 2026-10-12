@@ -41,8 +41,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 16428,
-      "sha256": "b22dd657ffde02597cd0e273ea335ff7681373cd0578a6d79c8c4e135c5b3632"
+      "bytes": 12068,
+      "sha256": "ca704fbef840ea7563530bb4ba684f06e16fcfdb5e083874261c71cf38fab250"
     },
     {
       "path": "alembic.ini",
@@ -191,8 +191,8 @@
     },
     {
       "path": "docs/DEPLOYMENT.md",
-      "bytes": 1783,
-      "sha256": "eea5b58f972075608d0c048fcda10043fb4476d425d7029bf038b45f931baef3"
+      "bytes": 8642,
+      "sha256": "605c76cae69ebe7b9c3af276dc65f57c31c8d2ee130bcac2dfbeef1fc4b785a9"
     },
     {
       "path": "docs/INTEGRATIONS.md",
