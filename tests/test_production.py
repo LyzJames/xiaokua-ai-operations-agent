@@ -23,7 +23,7 @@ class FakeShop:
             "transactions":[{"id":"gid://shopify/OrderTransaction/1","kind":"SALE","status":"SUCCESS","gateway":"bogus","test":True,"amountSet":{"shopMoney":{"amount":"10.00","currencyCode":"USD"}},"parentTransaction":None}],
             "fulfillments":[],"fulfillmentOrders":{"nodes":[],"pageInfo":{"hasNextPage":False}}}
         self.quantity=10;self.description="<p>Original</p>";self.tags=["xiaokua-test"];self.calls=[];self.unknown=False
-    def capability(self): return {"shop":{"name":"Test","plan":{"partnerDevelopment":True}},"currentAppInstallation":{"accessScopes":[{"handle":"write_orders"}]}}
+    def capability(self): return {"shop":{"name":"Test","plan":{"partnerDevelopment":True}},"currentAppInstallation":{"accessScopes":[{"handle":scope} for scope in ("write_orders","write_inventory","write_products","write_merchant_managed_fulfillment_orders")]}}
     def orders(self,search=""):return [copy.deepcopy(self.o)]
     def variants(self):return []
     def order(self,id):return copy.deepcopy(self.o)
@@ -37,8 +37,13 @@ class FakeShop:
         self.calls.append(("refund",key))
         return {"refund":{"id":"gid://shopify/Refund/1","transactions":{"nodes":[{"status":"SUCCESS"}]}},"userErrors":[]}
     def product_update(self,pid,html):self.calls.append(("product",pid));self.description=html;return {"product":{"id":pid},"userErrors":[]}
-    def fulfill(self,o,p):self.calls.append(("fulfill",o["id"]));return {"fulfillment":{"id":"gid://shopify/Fulfillment/1"},"userErrors":[]}
-    def cancel(self,oid,r):self.calls.append(("cancel",oid));return {"job":{"id":"gid://shopify/Job/1","done":True},"userErrors":[]}
+    def fulfill(self,o,p):
+        self.calls.append(("fulfill",o["id"]));self.o['fulfillments']=[{'id':'gid://shopify/Fulfillment/1','status':'SUCCESS','trackingInfo':[p]}]
+        self.o['displayFulfillmentStatus']='FULFILLED'
+        return {"fulfillment":{"id":"gid://shopify/Fulfillment/1"},"userErrors":[]}
+    def cancel(self,oid,r):
+        self.calls.append(("cancel",oid));self.o['cancelledAt']='2026-01-01T00:00:00Z'
+        return {"job":{"id":"gid://shopify/Job/1","done":True},"userErrors":[]}
 
 @pytest.fixture
 def product(tmp_path):
@@ -49,6 +54,21 @@ def product(tmp_path):
         yield app,client,fake
 
 def csrf(client): return client.get('/api/bootstrap').json()['csrf']
+
+@pytest.mark.security
+def test_cancel_accepted_then_poll_failure_remains_unknown_without_second_write(monkeypatch):
+    api=Shopify('synthetic.myshopify.com','synthetic-token')
+    sent=[]
+    def accepted(*args):
+        sent.append(True)
+        return {'job':{'done':False},'userErrors':[],'orderCancelUserErrors':[]}
+    def unavailable(*args):raise ShopifyError('HTTP_503')
+    monkeypatch.setattr(api,'mutation',accepted)
+    monkeypatch.setattr(api,'order',unavailable)
+    monkeypatch.setattr('backend.production.shopify.time.sleep',lambda _:None)
+    with pytest.raises(ShopifyError) as error:api.cancel('gid://shopify/Order/1','CUSTOMER')
+    assert error.value.unknown and len(sent)==1
+
 def post(client,path,body):return client.post('/api'+path,json=body,headers={'X-CSRF-Token':csrf(client)})
 def register(app,client,email='owner@example.com'):
     token=(app.state.settings.directory/'setup.token').read_text()

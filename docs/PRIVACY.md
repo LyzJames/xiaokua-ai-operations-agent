@@ -45,3 +45,9 @@ uv run python scripts/check_publication.py --root PATH_TO_CLEAN_PUBLIC_TREE --al
 初始化生成的账户密码、浏览器会话、`context.json`、平台读数、事件、报告导出及原始截图全部位于忽略的 `data/`。测试者应将这些视为私密业务材料，不上传 GitHub。
 
 报告中的八张新流程图是公开 JSON 在 `journey-evidence.html` 的原始浏览器截图，明确标为脱敏报告界面，不是原始飞书/Shopify 工作台截图。另有一张实际 Test Payment Gateway 结账视口，只含合成商品、虚拟卡输入及测试金额；不含商户或买家身份。两类新图片与旧离线合成图库分别写入截图清单。对原始平台截图没有做遮盖后发布。
+
+## 0.4 多平台公开材料
+
+Amazon LWA 凭据、客户端标识、刷新 token、授权应用 ID、真实商户连接与所有原始响应留在私有 `.env`、Key.txt 或 data/。生产读取不请求买家/收件人身份；静态沙箱的官方样例可能含虚构身份，适配器立即丢弃，不落业务库或模型上下文。
+
+公开 commerce-live-acceptance.json 只含步骤名、状态、角色数量与合成库存读数；45–48 是这份脱敏记录的浏览器报告截图，不是平台后台截图。34–44 为正式 Web 流程在合成店铺上的原始截图，UUID、域名与成员均为本机生成的研究数据。图片未编辑或遮盖，均逐图检查并记录哈希。

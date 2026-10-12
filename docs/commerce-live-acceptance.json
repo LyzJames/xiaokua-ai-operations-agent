@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-12T16:45:32.654094+00:00",
+  "scope": "Own-account hosted sandbox acceptance, not production Amazon fulfillment",
+  "approval": "two distinct synthetic fixture identities; separate Web/Feishu human approval evidence in test report",
+  "payments": 0,
+  "production_amazon_writes": 0,
+  "checks": [
+    {
+      "name": "Amazon LWA + FBA sandbox connection",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Shopify installed development-store connection",
+      "passed": true
+    },
+    {
+      "name": "Web multi-platform sync and analysis chain",
+      "passed": true,
+      "mode": "own-account APIs + model",
+      "shopify_orders": "live test-store records",
+      "amazon_orders": "hosted regional static fixture",
+      "amazon_inventory": "dynamic sandbox"
+    },
+    {
+      "name": "DeepSeek role reports validated",
+      "passed": true,
+      "roles": 6
+    },
+    {
+      "name": "Approved sandbox_sku with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved sandbox_stock with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved mcf_create with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved sandbox_status with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved sandbox_package with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved sandbox_package with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved mcf_create with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "Approved mcf_cancel with readback",
+      "passed": true,
+      "environment": "amazon_dynamic_sandbox"
+    },
+    {
+      "name": "FBA availability after virtual completion and cancellation",
+      "passed": true,
+      "expected_quantity": 8,
+      "observed_quantity": 8,
+      "observed_reserved": 2
+    },
+    {
+      "name": "Approved inventory with readback",
+      "passed": true,
+      "environment": "shopify_test_store"
+    },
+    {
+      "name": "Shopify compare-and-set validation with unchanged target",
+      "passed": true,
+      "net_inventory_change": 0
+    },
+    {
+      "name": "Tenant audit chain verified",
+      "passed": true
+    },
+    {
+      "name": "No secret or buyer identity in exported state",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

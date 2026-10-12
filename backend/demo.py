@@ -19,7 +19,7 @@ FEISHU_CONNECTION = "conn_demo_feishu"
 DEMO_ORG = "org_demo_research"
 
 
-def create_demo(directory=None, port=8003, worker_enabled=True):
+def create_demo(directory=None, port=8003, worker_enabled=True, multi_store=False):
     directory = Path(directory or ROOT / "data" / "research_demo")
     directory.mkdir(parents=True, exist_ok=True)
     marker = directory / "research-demo.marker"
@@ -27,10 +27,14 @@ def create_demo(directory=None, port=8003, worker_enabled=True):
         raise RuntimeError("演示入口拒绝使用已有的非演示数据库")
     marker.write_text("Synthetic data only", encoding="utf-8")
     shop = DemoShop(directory / "synthetic-shop.json")
+    second_shop = DemoShop(directory / "synthetic-shop-b.json") if multi_store else None
+    def adapter(cid, tenant):
+        return second_shop if cid == "conn_demo_shopify_b" and second_shop else shop
     app = create_app(Settings(directory, "sqlite:///" + str(directory / "product.sqlite"),
-        public_url=f"http://127.0.0.1:{port}", worker_enabled=worker_enabled, test_only=True), lambda c, t: shop)
+        public_url=f"http://127.0.0.1:{port}", worker_enabled=worker_enabled, test_only=True), adapter)
     db, ops, feishu = app.state.db, app.state.ops, app.state.feishu
     app.state.demo = True
+    ops.offline = True
     app.state.demo_shop = shop
     if not db.list(tenants):
         with db.transaction() as conn:
@@ -44,8 +48,14 @@ def create_demo(directory=None, port=8003, worker_enabled=True):
                 conn.execute(connections.insert().values(id=cid, tenant_id=DEMO_ORG, provider=provider,
                     external_id="synthetic.myshopify.com" if provider=="shopify" else "cli_demo_synthetic",
                     secret=app.state.vault.seal({"app_id": "cli_demo_synthetic", "app_secret": "demo-offline-placeholder"}),
-                    status="active", info={"delivery":"websocket", "synthetic":True}, created_at=clock()))
+                    status="active", info={"delivery":"websocket", "synthetic":True, "demo":True}, created_at=clock()))
             db.audit(conn, DEMO_ORG, "demo", "demo.created", DEMO_ORG, {"synthetic": True, "outbound_platform_calls": False})
+    if multi_store and not db.get(connections, "conn_demo_shopify_b", DEMO_ORG):
+        with db.transaction() as conn:
+            conn.execute(connections.insert().values(id="conn_demo_shopify_b", tenant_id=DEMO_ORG, provider="shopify",
+                external_id="synthetic-b.myshopify.com", secret="", status="active", info={"synthetic":True, "demo":True, "label":"合成店铺 B"}, created_at=clock()))
+            db.audit(conn, DEMO_ORG, "demo", "demo.store.added", "conn_demo_shopify_b", {"synthetic":True})
+    app.state.demo_shops = {SHOP_CONNECTION: shop, **({"conn_demo_shopify_b":second_shop} if second_shop else {})}
 
     # Only this app instance substitutes adapters. Normal backend.service is unchanged.
     def simulated_send(token, open_id, kind, content, key):
@@ -69,7 +79,7 @@ def create_demo(directory=None, port=8003, worker_enabled=True):
 
     @app.middleware("http")
     async def demo_guard(request, call_next):
-        if request.url.path.startswith(("/api/shopify/", "/api/feishu/", "/hooks/")):
+        if request.url.path.startswith(("/api/shopify/", "/api/feishu/", "/api/amazon/", "/hooks/")):
             return JSONResponse({"detail":"研究演示禁止真实平台授权、凭据导入和外部回调"}, 403)
         return await call_next(request)
 
@@ -114,11 +124,12 @@ def main():
     parser = argparse.ArgumentParser(description="小跨离线研究原型 · 不访问真实平台")
     parser.add_argument("--port",type=int,default=8003)
     parser.add_argument("--data-dir",type=Path)
+    parser.add_argument("--multi-store",action="store_true",help="Add a second isolated synthetic shop for shared-inventory research")
     args = parser.parse_args()
     import uvicorn
     print(f"研究演示：http://127.0.0.1:{args.port}；全部为合成数据，不调用外部平台。",flush=True)
     print("演示账号：owner@example.invalid / approver@example.invalid / operator@example.invalid；演示密码："+DEMO_PASSWORD,flush=True)
-    uvicorn.run(create_demo(args.data_dir,args.port), host="127.0.0.1", port=args.port, access_log=False)
+    uvicorn.run(create_demo(args.data_dir,args.port,multi_store=args.multi_store), host="127.0.0.1", port=args.port, access_log=False)
 
 
 if __name__=="__main__": main()

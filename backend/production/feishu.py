@@ -11,11 +11,15 @@ from .workflows import BusinessError, redact
 class FeishuError(Exception): pass
 
 def status_label(status):
-    return {"completed":"已完成","executed":"已执行","rejected":"已拒绝","uncertain":"结果待核实","needs_review":"需要核实","failed":"失败","partial":"部分完成","reconciled":"已核实结案","expired":"已过期","approved":"已批准，等待执行","pending":"等待审批","awaiting_approval":"等待审批","queued":"排队中","running":"处理中"}.get(status,"处理中")
+    return {"needs_input":"请补充指令","completed":"已完成","executed":"已执行","rejected":"已拒绝","uncertain":"结果待核实","needs_review":"需要核实","failed":"失败","partial":"部分完成","reconciled":"已核实结案","expired":"已过期","approved":"已批准，等待执行","pending":"等待审批","awaiting_approval":"等待审批","queued":"排队中","running":"处理中"}.get(status,"处理中")
 
 def approval_preview(action):
     """Plain text keeps product/customer text from becoming card markup."""
     p=action["payload"];before=action["before"];kind=action["kind"]
+    if kind == "pool_adjust":
+        return f"共享库存池：{p['pool_id']}\n实物在库：{before['on_hand']} → {p['quantity']}\n安全库存：{before['safety']} → {p['safety']}"
+    if kind in ("sandbox_sku", "sandbox_stock", "mcf_create", "mcf_cancel", "sandbox_status", "sandbox_package"):
+        return "Amazon 动态沙箱操作\n" + json.dumps({key:value for key,value in p.items() if key in {"sku","quantity","order_id","package_id","status"}}, ensure_ascii=False)
     if kind=="inventory":
         return f"库存数量：{before['quantity']} → {p['quantity']}\n库存项目：{p['item_id']}\n库存地点：{p['location_id']}"
     if kind=="product":
@@ -121,15 +125,26 @@ class Feishu:
             except BusinessError as e: text=str(e)
         else:
             text=p["text"].strip()
-            # Chat can launch read operations. Writing needs a structured proposal on the workbench.
-            shops=self.db.list(connections,tenant_id,10,provider="shopify",status="active")
-            connection_id=shops[0]["id"] if len(shops)==1 else None
-            if any(w in text for w in ("同步","拉取订单")):
-                if not connection_id: raise FeishuError("请在工作台明确选择店铺")
-                kind="sync"
-            else: kind="chat"
-            task=self.ops.submit(actor,text,kind,{"use_ai":True,"notify_open_id":p["sender_id"],"notify_feishu_connection":conn["id"]},connection_id,"feishu-"+ev["external_id"])
-            text=f"已创建任务 {task['id']}。结果与审批：{self.settings.public_url}"
+            from .commands import submit_command
+            from .platforms.contracts import PROVIDERS
+            import re
+            shops = [shop for shop in self.db.list(connections, tenant_id, 100, status="active") if shop["provider"] in PROVIDERS]
+            labels = re.findall(r"店铺[\[【]([^\]】]{1,120})[\]】]", text)
+            if any(word in text for word in ("所有店铺", "全部店铺")):
+                selected = [shop["id"] for shop in shops]
+            elif labels:
+                selected = [shop["id"] for shop in shops if any(label in (shop["id"], shop["external_id"], shop["info"].get("label"), shop["info"].get("shop", {}).get("name")) for label in labels)]
+                if len(selected) != len(labels):
+                    selected = []
+            else:
+                mentioned = [shop for shop in shops if PROVIDERS[shop["provider"]].name.lower() in text.lower()]
+                selected = [mentioned[0]["id"]] if len(mentioned) == 1 else [shops[0]["id"]] if len(shops) == 1 else []
+            if not selected:
+                text = "请明确店铺范围，例如‘同步所有店铺’或‘店铺[你的店铺标签] 分析订单’。也可在 Web 选择店铺。" + self.settings.public_url
+            else:
+                task = submit_command(self.ops, actor, text, selected, "feishu", "feishu-"+ev["external_id"],
+                    {"notify_open_id":p["sender_id"],"notify_feishu_connection":conn["id"]}, use_ai=not getattr(self.ops, "offline", False))
+                text=f"已创建任务 {task['id']}。写入仍需独立审批。结果与审批：{self.settings.public_url}"
         token=self.token(secret)
         self.send(token,p["sender_id"],"text",{"text":text},ev["id"])
         with self.db.transaction() as db:
@@ -160,12 +175,16 @@ class Feishu:
                 self.send(token,u["feishu_open_id"],"interactive",card,action_id+u["id"])
 
     def notify_task(self,task_id,tenant_id):
+        notification_key = task_id
+        task_id, _, requested_status = task_id.partition(":")
         task=self.db.get(tasks,task_id,tenant_id)
         if not task:return
+        if requested_status and task["status"] != requested_status:
+            return {"ok": True, "superseded": True}
         p=task["params"];con=self.db.get(connections,p.get("notify_feishu_connection"),tenant_id)
         actor=self.db.get(users,task["actor_id"],tenant_id)
         if not con or con["provider"]!="feishu" or con["status"]!="active" or not actor or not actor["active"] or actor["feishu_open_id"]!=p.get("notify_open_id"):raise FeishuError("通知接收人或连接权限已失效")
         text=f"任务 {task_id}：{status_label(task['status'])}\n{task['result'].get('summary','')}"
         for r in task["result"].get("reports",[]):text+=f"\n\n{r['role']}\n{r['finding'][:900]}"
         text+="\n\n工作台："+self.settings.public_url
-        self.send(self.token(self.vault.open(con["secret"])),actor["feishu_open_id"],"text",{"text":text},task_id+"complete")
+        self.send(self.token(self.vault.open(con["secret"])),actor["feishu_open_id"],"text",{"text":text},notification_key+"complete")

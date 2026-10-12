@@ -1,6 +1,6 @@
 [project]
 name = "xiaokua-operations"
-version = "0.3.0"
+version = "0.4.0"
 description = "小跨 · 全链路 AI 运营官"
 requires-python = ">=3.11,<3.14"
 dependencies = [

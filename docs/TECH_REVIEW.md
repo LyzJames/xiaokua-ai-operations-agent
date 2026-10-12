@@ -39,3 +39,7 @@
 这些检查不替代飞书消息/卡片投递、Shopify 测试订单闭环或开放问题的模型质量评估。完整真实复现流程见 [接入指南](INTEGRATIONS.md)；基线与本轮证据范围见 [分类测试报告](TEST_REPORT.md)。
 
 后续优先方向是经过同意的合成质量评测集、更多市场/主题、平台 API 版本迁移和容量研究。接入 MCP/A2A、语义记忆或其他模型时，应先提出明确的复现需求，再为新的接口增加身份、数据边界和失败行为测试。
+
+## 2026-10-13：多平台适配与真实沙箱复核
+
+按实际平台语义增加 adapter、能力声明、店铺范围分派和库存事务台账；保留单一审批/执行责任。订单采用 [Amazon Orders 当前版本](https://developer-docs.amazon.com/sp-api/docs/orders-api) 2026-01-01；MCF 采用 [2026-07-04 官方模型](https://github.com/amzn/selling-partner-api-models/blob/main/models/fulfillment-outbound-api-model/fulfillmentOutbound_2026-07-04.json)，按 [动态沙箱](https://developer-docs.amazon.com/sp-api/docs/fulfillment-outbound-dynamic-sandbox-guide) 验证创建、完成、取消和虚拟包裹交付。接口成功应答之后还需读数吻合，才能放行联动增量。其他平台仅在明确资格与官方文档后实现，不猜测私有接口。
