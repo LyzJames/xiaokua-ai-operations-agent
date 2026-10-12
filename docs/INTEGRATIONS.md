@@ -32,7 +32,7 @@ uv run python scripts/verify_integrations.py --platforms-readonly --model
 4. 组织负责人在“平台连接”输入自己的 `your-store.myshopify.com` 并授权。平台连接及同步结果归属当前组织；OAuth 状态、HMAC、域名和租户关系都由后端校验。
 5. 订单访问可能需要在应用平台的 Protected customer data access 中说明用途并保存；公开应用还需要相应审查。本项目不查询客户姓名、邮箱、电话或地址。
 
-权限包括订单、产品、库存、位置及商户管理的履约订单。默认查询近 30 天订单，不需要为了这个范围申请 `read_all_orders`。真实 API 使用 GraphQL Admin API `2026-10`，后续版本需自行复核字段与弃用情况。
+权限包括订单、产品、库存、位置及商户管理的履约订单。可读取的订单范围受平台授权窗口与查询条件限制，不额外申请 `read_all_orders`。真实 API 使用 GraphQL Admin API `2026-10`，后续版本需自行复核字段与弃用情况。
 
 只针对自己组织已安装的开发应用，工作台本机入口提供 Client Credentials 导入；已有 Admin API token 可用于只读连接探针。这不能替代面向所有商户的 OAuth。服务端不把 token 返回给前端。
 
@@ -44,7 +44,15 @@ uv run python scripts/verify_integrations.py --platforms-readonly --model
 
 工作台“刷新数据”读取本地快照；点击订单/库存“同步”才能得到最新平台快照。结果待核实的审批记录提供“查询平台”，用于人工核实结案，包括平台异步取消结果。
 
-本项目此前完成开发店铺 API 测试链路；没有对 Checkout 测试网关界面流程作验收。公开报告只保留结果摘要，不公开店铺地址、账号和资源标识。
+2026-10-12 已完成三个从买家前台测试下单开始的真实平台案例，包含消息、模型、独立审批、平台回读、通知与审计。步骤和通用核验脚本见 [USER_JOURNEYS.md](USER_JOURNEYS.md)，结果和图片见 [TEST_REPORT.md](TEST_REPORT.md)。公开报告不包含店铺地址、账号或资源标识。
+
+### 前台测试结账的准备
+
+只在自己的开发店铺启用 Test Payment Gateway，保持前台密码保护。创建三个独立测试商品，发布到在线商店；为德国和法国启用测试市场，给这些商品配置可配送的库存地点、配送地区及测试运费。本轮使用每件 19.90 USD、初始库存 10、零测试运费；不购买物流标签。
+
+初始化脚本检查主地点的 `isActive`、`fulfillsOnlineOrders` 和 `shipsInventory`。有后台库存并不代表前台可以买，仍需检查商品的配送配置和市场。使用 [Shopify 官方测试下单说明](https://help.shopify.com/en/manual/checkout-settings/test-orders) 中的虚拟卡输入；不要填真实银行卡，也不要为了测试走真实支付再退款。买家邮箱可用保留的 `example.com`，本轮 `.invalid` 因域名校验被拒绝。
+
+通用案例初始化会创建新的组织、两个不同角色成员、加密连接与三个 DRAFT 测试商品，不创建订单、不伪造消息，也不批准业务。你仍需在浏览器完成发布、结账、飞书消息及卡片审批；运行账号、会话、平台记录和原始图片均留在私有 `data/`。
 
 ## 飞书自建应用
 
@@ -84,6 +92,8 @@ uv run python -m backend.production.feishu_ws --connection-id YOUR_FEISHU_CONNEC
 离线 `backend.demo` 始终使用规则模式。真实 `backend.service` 才调用研究者的模型；模型费用由自己的账号承担，不需要另行购买编排或记忆云服务。
 
 模型探针只用合成输入。实际运行时，导入知识和客服资料应先去除个人信息；模型角色只接收受限上下文，运行结果仍属于组织私密资料。
+
+针对某笔订单，应先通过飞书同步最新订单及商品明细，再发送“分析德国订单 #你的订单编号 的能源效率咨询”。`#` 后填写店铺订单的数字部分；当前实现识别数字订单编号。模型上下文在调用前限定到该订单与相关商品。编号未知、同名不唯一或明细被截断时会拒绝分析；库存数量是已同步的跨地点汇总，实际履约仍需检查区域可配送性。
 
 ## 隐私事件
 
