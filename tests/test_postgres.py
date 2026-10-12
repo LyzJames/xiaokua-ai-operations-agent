@@ -81,3 +81,42 @@ def test_postgres_parallel_role_journal_survives_database_reopen(pg):
         assert len(reopened.list(analysis_steps,t,task_id=task['id']))==3
         assert reopened.verify(t)['valid']
     finally:reopened.engine.dispose()
+
+
+def test_postgres_shared_pool_parallel_observations_do_not_double_reserve_or_ship(pg,tmp_path):
+    from backend.demo_shop import DemoShop
+    from backend.production.workflows import Operations
+    from backend.production.shopify import upsert_resource
+    from backend.production.database import inventory_pools, inventory_positions, stock_journal
+    db,t=pg
+    settings=Settings(tmp_path,'sqlite:///'+str(tmp_path/'unused.sqlite'),worker_enabled=False)
+    shops={uid('conn'):DemoShop(tmp_path/f'store-{i}.json') for i in range(2)}
+    ops=Operations(db,None,settings,lambda cid,tenant:shops[cid])
+    actor={'id':'synthetic-stock-owner','tenant_id':t}
+    with db.transaction() as c:
+        for cid,shop in shops.items():
+            c.execute(connections.insert().values(id=cid,tenant_id=t,provider='shopify',external_id=cid+'.myshopify.com',secret='',status='active',
+                info={'demo':True,'last_sync':clock(),'order_access':True,'sync_errors':[]},created_at=clock()))
+            for value in shop.orders():upsert_resource(c,t,cid,'order',value)
+            for value in shop.variants():upsert_resource(c,t,cid,'variant',value)
+    pool=ops.shared.create_pool(actor,'Synthetic shared stock','DEMO-BULB-01','synthetic-eu')
+    for cid in shops:ops.shared.add_mapping(actor,pool['id'],cid,'gid://shopify/ProductVariant/1','gid://shopify/Location/1')
+    with db.transaction() as c:c.execute(update(inventory_pools).where(inventory_pools.c.id==pool['id']).values(on_hand=100,initialized=True))
+    identifiers=list(shops)
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        list(executor.map(lambda i:ops.shared.ingest(identifiers[i%2],t),range(12)))
+    state=ops.shared.state(t)['pools'][0]
+    assert (state['on_hand'],state['reserved'],state['available'])==(100,4,91)
+    assert len(db.list(inventory_positions,t))==4
+    cid=identifiers[0];shop=shops[cid]
+    shop.fulfill(shop.order('gid://shopify/Order/1'),{'company':'Synthetic','number':'TEST-PG'})
+    with db.transaction() as c:
+        for value in shop.orders():upsert_resource(c,t,cid,'order',value)
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        list(executor.map(lambda _:ops.shared.ingest(cid,t),range(12)))
+    state=ops.shared.state(t)['pools'][0]
+    assert (state['on_hand'],state['reserved'])==(99,3)
+    assert sum(j['delta'] for j in db.list(stock_journal,t,100) if j['kind']=='order_observed')==-1
+    assert db.verify(t)['valid']
+    with pytest.raises(Exception):
+        with db.transaction() as c:c.execute(update(stock_journal).where(stock_journal.c.tenant_id==t).values(delta=9))
