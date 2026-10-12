@@ -16,6 +16,11 @@ def credentials() -> dict[str, str]:
         "shopifyclientsecret": "SHOPIFY_CLIENT_SECRET", "shopify店铺域名": "SHOPIFY_SHOP_DOMAIN",
         "shopifyshopdomain": "SHOPIFY_SHOP_DOMAIN", "shopifyaccesstoken": "SHOPIFY_ACCESS_TOKEN",
         "feishuverificationtoken": "FEISHU_VERIFICATION_TOKEN", "feishuencryptkey": "FEISHU_ENCRYPT_KEY",
+        "亚马逊应用程序id": "AMAZON_APPLICATION_ID", "amazonapplicationid": "AMAZON_APPLICATION_ID",
+        "亚马逊客户端编码": "AMAZON_LWA_CLIENT_ID", "amazonlwaclientid": "AMAZON_LWA_CLIENT_ID",
+        "亚马逊客户端密钥": "AMAZON_LWA_CLIENT_SECRET", "amazonlwaclientsecret": "AMAZON_LWA_CLIENT_SECRET",
+        "亚马逊沙盒令牌": "AMAZON_REFRESH_TOKEN", "亚马逊沙箱令牌": "AMAZON_REFRESH_TOKEN",
+        "amazonrefreshtoken": "AMAZON_REFRESH_TOKEN", "amazonsellerid": "AMAZON_SELLER_ID",
     }
     values: dict[str, str] = {}
     if KEY_FILE.is_file():

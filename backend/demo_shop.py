@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 from pathlib import Path
 from threading import RLock
+from datetime import datetime, timezone
 
 
 def money(amount):
@@ -26,6 +27,9 @@ class DemoShop:
                     "transactions": [{"id": f"gid://shopify/OrderTransaction/{number}", "kind": "SALE", "status": "SUCCESS",
                         "gateway": "demo", "test": True, "amountSet": money("19.90"), "parentTransaction": None}],
                     "fulfillments": [], "fulfillmentOrders": {"nodes": [], "pageInfo": {"hasNextPage": False}}, "refunds": [],
+                    "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "2026-01-01T00:00:00Z",
+                    "lineItems": {"nodes": [{"id": f"gid://shopify/LineItem/{number}", "quantity": 1, "sku": "DEMO-BULB-01",
+                        "variant": {"id": "gid://shopify/ProductVariant/1", "product": {"id": "gid://shopify/Product/1"}}}], "pageInfo": {"hasNextPage": False}},
                 })
             self.save()
 
@@ -80,6 +84,7 @@ class DemoShop:
         with self.lock:
             value = next(o for o in self.data["orders"] if o["id"] == oid)
             result = callback(value)
+            value["updatedAt"] = datetime.now(timezone.utc).isoformat()
             self.save()
             return result
 
@@ -100,7 +105,9 @@ class DemoShop:
         def change(value):
             fid = "gid://shopify/Fulfillment/1"
             value["displayFulfillmentStatus"] = "FULFILLED"
-            value["fulfillments"] = [{"id": fid, "status": "SUCCESS", "trackingInfo": [params]}]
+            value["fulfillments"] = [{"id": fid, "status": "SUCCESS", "trackingInfo": [params],
+                "fulfillmentLineItems": {"nodes": [{"lineItem": {"id": line["id"]}, "quantity": line["quantity"]}
+                    for line in value.get("lineItems", {}).get("nodes", [])], "pageInfo": {"hasNextPage": False}}}]
             return {"fulfillment": {"id": fid}, "userErrors": []}
         return self.change_order(order["id"], change)
 
