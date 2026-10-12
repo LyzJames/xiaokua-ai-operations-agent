@@ -4,7 +4,7 @@
 
 ## 完整真实复现：先准备自己的研究环境
 
-完整功能需要飞书自建应用、已安装 Shopify 应用的开发店铺，以及可用 DeepSeek API Key。所有凭据只放私有 `.env` 或密钥文件；原型不会替你提供平台账号。
+完整功能复现需要已安装 Shopify 应用的开发店铺、Amazon SP-API/LWA 沙箱凭据和可用模型 API Key。Web 可独立使用；飞书入口另外配置自己的自建应用。所有凭据只放私有 `.env` 或密钥文件；原型不会替你提供平台账号。
 
 1. 按 README 安装后端依赖并构建前端，将 `.env.example` 复制为私有 `.env`。
 2. 保持 `APP_ENV=development`、`PUBLIC_URL=http://127.0.0.1:8000`、`SHOPIFY_TEST_ONLY=true`，填写你自己的平台凭据和 `DEEPSEEK_MODEL`。本机研究优先使用飞书长连接。
@@ -79,7 +79,33 @@ uv run python -m backend.production.feishu_ws --connection-id YOUR_FEISHU_CONNEC
 
 使用固定 HTTPS 地址 `/hooks/feishu/CONNECTION_ID`，填写 Verification Token 和 Encrypt Key。后端校验 AES 信封、签名、时间戳、应用/租户身份、成员权限和事件去重；长连接模式不能从此地址接收事件。
 
-这一路径有自动化签名测试，公开交付没有公网真实投递验收。成员 OAuth 回调仍为 `/api/feishu/callback`。聊天启动同步与分析；业务写入必须先在工作台提出结构化方案。
+这一路径有自动化签名测试，公开交付没有公网真实投递验收。成员 OAuth 回调仍为 `/api/feishu/callback`。聊天与 Web 使用公共指令分派，可提出明确金额、数量和对象的业务方案；所有写入仍需独立审批。多店使用“店铺[标签]”或“所有店铺”，不能让系统猜测目标商店。
+
+## Amazon SP-API
+
+在“平台连接”输入自己商户授权的 LWA Client ID、Client Secret、Refresh Token，明确选择 `sandbox` 或 `production`、区域和 Marketplace。服务端只使用官方固定端点，获取并缓存短期访问 token，凭据加密保存且不返回前端。本机 `AMAZON_*` 导入始终指向沙箱。
+
+| 区域 | 生产 / 沙箱端点 | 示例站点 |
+| --- | --- | --- |
+| 北美 `na` | `sellingpartnerapi-na.amazon.com` / `sandbox.sellingpartnerapi-na.amazon.com` | 美国 `ATVPDKIKX0DER` |
+| 欧洲 `eu` | `sellingpartnerapi-eu.amazon.com` / `sandbox.sellingpartnerapi-eu.amazon.com` | 德国 `A1PA6795UKMFR9` |
+| 远东 `fe` | `sellingpartnerapi-fe.amazon.com` / `sandbox.sellingpartnerapi-fe.amazon.com` | 日本 `A1VC38T7YXB528` |
+
+Order API 使用 `2026-01-01`；FBA Inventory 使用 v1；MCF 使用 Fulfillment Outbound `2026-07-04`。LWA/SP-API 认证、固定端点与访问 token 方式依据 [官方连接说明](https://developer-docs.amazon.com/sp-api/docs/connecting-to-the-selling-partner-api)。生产订单仅读取金额、履约、取消与包裹相关数据集，不请求买家/收件人身份字段。
+
+**两种沙箱分开核验：** Orders 采用官方精确参数的静态样例，本区域样例站点可能与所选 FBA 站点不同。北美样例为巴西，欧洲为英国，远东为日本；适配器明确标注来源，只取匹配的固定样例页，不把示例 continuation token 当作完整动态订单分页。错误区域与样例站点组合会出现访问拒绝。读取到的固定样例不参与物理库存预留。
+
+FBA/MCF 是动态沙箱。在“商品与库存”选择 Amazon 沙箱店，依次申请创建测试 SKU、增加虚拟库存、创建 MCF；每个步骤由另一成员审批。完成履约后，从执行结果复制包裹编号，再分别推进虚拟包裹到派送、交付；也可另建 MCF 验证取消。操作后同步与只读回查会记录平台实际状态。沙箱没有真实付款、包裹或平台通知，不可用来压测，也不能在 Seller Central 商家后台看这些沙箱订单。
+
+动态 FBA 可售数量由平台维护，不能直接设置 FBA 实物库存。FBA 与自发货库存分别建池；当前不开放 Amazon 自发货库存设置。生产 Amazon 连接只读，真实 MCF 的目的地资料、角色、隐私范围、费用、通知和生产状态须单独验收后才能开放写入，不能通过改模型提示解除。
+
+生产商户还要完成自己的开发者角色与商户授权；更改角色后按官方流程重新取得相应授权。多商户产品应完成平台要求的分发/审核与 OAuth 安装，不能共享原型作者的测试凭据。完整复现和已观察到的数据差异见 [多平台验收](MULTI_PLATFORM_ACCEPTANCE.md)。
+
+## 淘宝、京东、拼多多和 TEMU
+
+这些平台尚未取得真实测试资格。当前仅定义应用内部公共快照、能力与执行契约，未实现平台专属签名、授权或真实商品/订单接口；界面标注为待资格。不能把合成契约测试视为已经接通。
+
+取得资格后，按各自官方平台文档实现 adapter 和负责人接入，明确店铺身份、销售模式、区域、权限包和库存语义，再验证真实读写。开发方法见 [跨平台架构](COMMERCE_ARCHITECTURE.md)。入口：[淘宝开放平台](https://open.taobao.com/)、[京东零售开放平台](https://open.jd.com/)、[拼多多开放平台](https://open.pinduoduo.com/)、[TEMU Partner](https://partner.temu.com/)。部分内容需要 JavaScript 或登录资格，本轮不据未公开文档猜测接口字段。
 
 ## DeepSeek 与结构化分析
 

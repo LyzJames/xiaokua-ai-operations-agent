@@ -1,12 +1,14 @@
 {
-  "schema": 2,
+  "schema": 3,
   "source": "Chrome browser screenshot",
   "image_edits": false,
   "manual_pixel_review": true,
   "source_counts": {
     "synthetic_baseline": 33,
     "sanitized_live_acceptance_report": 8,
-    "real_test_checkout_synthetic_buyer": 1
+    "real_test_checkout_synthetic_buyer": 1,
+    "synthetic_multi_store_web": 11,
+    "sanitized_live_commerce_report": 4
   },
   "screenshots": [
     {
@@ -343,6 +345,126 @@
       "captured_at_utc": "2026-10-12T07:10:41.698098+00:00",
       "bytes": 86085,
       "sha256": "ae60b20886394e78a1023bc87ee862c44179586c9eb894f6016e97ea68342cfd",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/34-web-multi-store.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:26:40.623040+00:00",
+      "bytes": 109193,
+      "sha256": "3e660467eb56fceed4c61a5442d38578e1b4f1961a413923231116a5260c2f83",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/35-web-command-closed.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:27:08.312841+00:00",
+      "bytes": 42364,
+      "sha256": "3d46ffc25cd503d7be107188a4903caa87e317cd6fb442e0e40977c417f11f9f",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/36-stock-opening.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:28:25.455169+00:00",
+      "bytes": 116665,
+      "sha256": "806261c3358ed3201be54d0ec5a0dde858fbf7a44b8ecce6bb347cc1894b9872",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/37-stock-independent-approval.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:28:43.878719+00:00",
+      "bytes": 48605,
+      "sha256": "c47295c2d746ec4e303ff1a20f088c91860e820d42ba35fdcc2a80feb1882ff4",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/38-stock-allocation-plan.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:30:35.333964+00:00",
+      "bytes": 16687,
+      "sha256": "c7d4430a692fc2ece07da84cfa6841975657a0f9e7759420ec26c2d9cd3e22d8",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/39-stock-decrease-first.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:30:45.008883+00:00",
+      "bytes": 56636,
+      "sha256": "7d45a6cee8a44c1c049e55338423ef967e7daf24b39692cb342cdf643c29edde",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/40-stock-increase-after-readback.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:31:13.178588+00:00",
+      "bytes": 55259,
+      "sha256": "760dd14f14852f6a004f6f1fe2c2f0d1ccf331e767b9a03ff24ffec5abc15a64",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/41-stock-completed.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:31:49.188910+00:00",
+      "bytes": 46651,
+      "sha256": "f0a053b738b47409aa0b4b6ba3a3953d9108053c0e2a4f9aeabee4dc4c0aa515",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/42-stock-quota-readback.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T17:03:47.963796+00:00",
+      "bytes": 43922,
+      "sha256": "4b6a9b2586351dbcf5fdfb92b195fd489a2bda8a737913996eddd9a772fd5eee",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/43-commerce-audit.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:32:11.540709+00:00",
+      "bytes": 45060,
+      "sha256": "af87bdea85e4625ba7fd1839b9f9f8625f2b6df465c9228783aa83dd1d687a67",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/44-platform-capabilities.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "captured_at_utc": "2026-10-12T16:33:34.061088+00:00",
+      "bytes": 46632,
+      "sha256": "bc48fef84d87f494017ef4d9bbbca76b62a44c5d29779b74dff921371ea83fb3",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/45-amazon-live-chain.jpg",
+      "source_kind": "sanitized_live_commerce_report",
+      "captured_at_utc": "2026-10-12T17:03:18.327979+00:00",
+      "bytes": 50215,
+      "sha256": "054e8de8994a2f90221a51d56a65e624a6d34f4380e3addc45048813afce6d7d",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/46-amazon-live-steps.jpg",
+      "source_kind": "sanitized_live_commerce_report",
+      "captured_at_utc": "2026-10-12T17:03:18.623889+00:00",
+      "bytes": 47426,
+      "sha256": "379545ac8e7a8718d127cfa73e21c72f02240da862e697556441557ce31a2e08",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/47-amazon-live-readback.jpg",
+      "source_kind": "sanitized_live_commerce_report",
+      "captured_at_utc": "2026-10-12T17:03:25.014476+00:00",
+      "bytes": 54474,
+      "sha256": "483310c4051fc9621aa37b0793db183740fef10461e9f9f472201660c8784b58",
+      "manual_pixel_review": true
+    },
+    {
+      "path": "docs/images/48-amazon-delivery-cancel.jpg",
+      "source_kind": "sanitized_live_commerce_report",
+      "captured_at_utc": "2026-10-12T17:05:22.518773+00:00",
+      "bytes": 45142,
+      "sha256": "91a44909773b0f1fb878597712a2a4d6d3c5144bedf2a68d25de0dad4158469e",
       "manual_pixel_review": true
     }
   ]

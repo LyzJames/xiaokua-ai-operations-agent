@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "captured_at": "2026-10-12T11:04:42.942593+00:00",
+  "captured_at": "2026-10-12T18:02:26.716404+00:00",
   "suite": "synthetic automated regression",
   "python": "3.13.7",
   "os": "Windows",
@@ -12,7 +12,7 @@
       "title": "业务闭环",
       "status": "passed",
       "cases": {
-        "passed": 24,
+        "passed": 40,
         "failed": 0,
         "skipped": 0,
         "not_run": 0
@@ -23,7 +23,7 @@
       "title": "权限与安全",
       "status": "passed",
       "cases": {
-        "passed": 42,
+        "passed": 61,
         "failed": 0,
         "skipped": 0,
         "not_run": 0
@@ -34,7 +34,7 @@
       "title": "Agent 分析",
       "status": "passed",
       "cases": {
-        "passed": 27,
+        "passed": 28,
         "failed": 0,
         "skipped": 0,
         "not_run": 0
@@ -56,7 +56,7 @@
       "title": "恢复与发布",
       "status": "passed",
       "cases": {
-        "passed": 17,
+        "passed": 19,
         "failed": 0,
         "skipped": 0,
         "not_run": 0
