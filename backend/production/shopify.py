@@ -149,7 +149,11 @@ class Shopify:
             if result.get("job",{}).get("done"):break
             time.sleep(1)
             # Poll current order instead of repeating the cancellation mutation.
-            if self.order(order_id).get("cancelledAt"):
+            try:
+                cancelled = self.order(order_id).get("cancelledAt")
+            except ShopifyError:
+                raise ShopifyError("CANCEL_READBACK_UNAVAILABLE", True) from None
+            if cancelled:
                 result["job"]["done"]=True;break
         return result
 

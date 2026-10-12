@@ -76,12 +76,24 @@ class SharedInventory:
         location = next((v for v in snapshot["locations"] if v["id"] == location_id), None)
         if not snapshot["locations_complete"] or not location or type(location["available"]) is not int:
             self.error("库存地点资料不完整，请先同步")
+        initial_pool = self.db.get(inventory_pools, pool_id, t)
+        if not initial_pool:
+            self.error("共享库存池不存在")
+        if initial_pool["pool_type"] != location["pool_type"]:
+            self.error("FBA 平台仓与商家自发货仓必须分别建池")
+        # Native credential readers may open their own transaction to refresh a token.
+        # Resolve them before acquiring the stock transaction, including on SQLite.
+        allocation = initial_pool["pool_type"] != "merchant" or "inventory" in self.ops.client(connection_id, t).capabilities()["operations"]
         with self.db.transaction() as c:
             self.lock_tenant(c, t)
+            current_connection = self.db.get(connections, connection_id, t, c)
+            current_resource = self.db.get(resources, value[0]["id"], t, c)
+            if not current_connection or current_connection["status"] != "active" or not current_resource or current_resource["updated_at"] != value[0]["updated_at"]:
+                self.error("店铺授权或规格快照已变化，请重新同步后映射")
             pool = self.pool(c, t, pool_id)
             if pool["pool_type"] != location["pool_type"]:
                 self.error("FBA 平台仓与商家自发货仓必须分别建池")
-            if pool["pool_type"] == "merchant" and "inventory" not in self.ops.client(connection_id, t).capabilities()["operations"]:
+            if pool["pool_type"] == "merchant" and not allocation:
                 self.error("该适配器尚未开放共享库存分配写入")
             if pool["pool_type"] == "platform" and c.execute(select(sku_mappings.c.id).where(
                 sku_mappings.c.tenant_id == t, sku_mappings.c.pool_id == pool_id)).first():
@@ -153,7 +165,19 @@ class SharedInventory:
                 else:
                     self.freeze(c, pool, "MAPPED_INVENTORY_UNKNOWN")
             for order in normalized:
+                if order["environment"] != "sandbox_static" and order["fulfillment_channel"] == "unknown":
+                    for identifier in {m["pool_id"] for m in mappings}:
+                        pool = self.pool(c, t, identifier)
+                        if pool["pool_type"] == "merchant":
+                            self.freeze(c, pool, "FULFILLMENT_CHANNEL_UNKNOWN")
+                    continue
                 if order["environment"] == "sandbox_static" or order["fulfillment_channel"] != "merchant":
+                    continue
+                if not source_time(order["created_at"]) or not source_time(order["updated_at"]):
+                    for identifier in {m["pool_id"] for m in mappings}:
+                        pool = self.pool(c, t, identifier)
+                        if pool["pool_type"] == "merchant":
+                            self.freeze(c, pool, "ORDER_TIME_UNKNOWN")
                     continue
                 old_order = list(c.execute(select(inventory_positions).where(inventory_positions.c.tenant_id == t,
                     inventory_positions.c.connection_id == connection_id, inventory_positions.c.order_id == order["id"])))
@@ -402,8 +426,12 @@ class SharedInventory:
             if initial["pool_type"] == "merchant":
                 for record in self.db.list(resources, t, 10000, connection_id=mapping["connection_id"], kind="order"):
                     order = normalize_resource(connection["provider"], "order", record["data"])
+                    if order["environment"] != "sandbox_static" and order["fulfillment_channel"] == "unknown":
+                        self.error("订单履约渠道尚未确认，不能解除冻结")
                     if order["fulfillment_channel"] != "merchant" or order["environment"] == "sandbox_static":
                         continue
+                    if not source_time(order["created_at"]) or not source_time(order["updated_at"]):
+                        self.error("订单时间尚未确认，不能解除冻结")
                     if not order["lines_complete"] and not (order["cancelled"] or order["fulfillment_status"] == "FULFILLED"):
                         self.error("关联店铺仍有不完整订单明细，不能解除冻结")
                     for line in order["lines"]:
