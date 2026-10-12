@@ -1,0 +1,122 @@
+{
+  "schema": 4,
+  "source": "Chrome browser screenshot",
+  "image_edits": false,
+  "manual_pixel_review": true,
+  "source_counts": {
+    "sanitized_current_business_report": 10,
+    "synthetic_multi_store_web": 1
+  },
+  "screenshots": [
+    {
+      "path": "docs/images/35-web-command-closed.jpg",
+      "source_kind": "synthetic_multi_store_web",
+      "source_record": "offline synthetic Web application",
+      "captured_at_utc": "2026-10-12T16:27:08.312841+00:00",
+      "bytes": 42364,
+      "sha256": "3d46ffc25cd503d7be107188a4903caa87e317cd6fb442e0e40977c417f11f9f",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-a-1.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:33.834841+00:00",
+      "bytes": 95824,
+      "sha256": "482fbdd60cd7cbc73256e7ac09a95bf895ea45912b3a3c01da332f80b2885b9a",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-a-2.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:42.116411+00:00",
+      "bytes": 92488,
+      "sha256": "21464886551e1efa541f46d6d52c58d6ade58905836b4c499d3c9a6c99b33fbf",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-a-3.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:42.487275+00:00",
+      "bytes": 86753,
+      "sha256": "054266151e4ea8df59901bdf13893d0485c3b5782aaa8179548e03c890ea9529",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-b-1.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:47.391019+00:00",
+      "bytes": 95822,
+      "sha256": "468bf1138eab105e5b40d10e6cd9d91f44bf74ebf8a84c365bc3dca4566feb30",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-b-2.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:47.778675+00:00",
+      "bytes": 92893,
+      "sha256": "1de4d5965dd554736ba93e87d495e726217c8f9c9018c4995ce2b64e4551f529",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-b-3.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:53.046552+00:00",
+      "bytes": 86377,
+      "sha256": "d5864ebd298c04b9f8b797b78f562c57dce2b23c34c1de01a2f530a9de7a890f",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-c-1.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:53.434672+00:00",
+      "bytes": 96352,
+      "sha256": "7e4eea7e8e64946d40e50f7cb12e04caf303f9dd97f4c5366e9b7d620eb8d6c3",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-c-2.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:51:00.354402+00:00",
+      "bytes": 95679,
+      "sha256": "a807273bd29421db9a544b2560cbe36209ce7dbbbeefe05d27f0a60bcd561de3",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-c-3.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:51:00.751673+00:00",
+      "bytes": 96409,
+      "sha256": "44f4bb787f4b745cb1af4bb47860c9170c33e2615acb22e6dd84c00146e2952f",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    },
+    {
+      "path": "docs/images/current-overview.jpg",
+      "source_kind": "sanitized_current_business_report",
+      "source_record": "docs/journeys-acceptance.json",
+      "captured_at_utc": "2026-10-12T20:50:23.611537+00:00",
+      "bytes": 93809,
+      "sha256": "3d9926f326bd3e8067d9a00b05cedec922fd6b90a021a4d74edfc50337c6eac2",
+      "manual_pixel_review": true,
+      "unedited_browser_capture": true
+    }
+  ]
+}

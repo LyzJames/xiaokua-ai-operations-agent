@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小跨 0.4.1 · 三个完整电商业务报告</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#183145;font:14px/1.6 'Microsoft YaHei','Segoe UI',sans-serif}main{max-width:1280px;margin:auto;padding:20px 26px}header{display:flex;justify-content:space-between;gap:24px;padding:18px 24px;background:#123547;color:#fff;border-radius:14px}h1{font-size:23px;margin:0 0 4px}header p{margin:0;color:#bcd9df;font-size:12px}.scope{text-align:right;font-size:12px;align-self:center;min-width:250px}.scope strong{color:#a6e8d3}nav{display:flex;gap:8px;align-items:center;margin:14px 0}button{cursor:pointer;font:inherit;border:1px solid #d2dce3;background:#fff;color:#456173;border-radius:8px;padding:6px 13px}button[aria-pressed=true]{background:#117b71;border-color:#117b71;color:#fff}.stagebuttons{margin-left:auto;display:flex;gap:6px}h2{font-size:19px;margin:0}.casehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.badge{color:#117567;background:#e0f2ec;border-radius:20px;font-size:12px;padding:3px 12px}.warn{color:#a05218;background:#fff0de}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{padding:14px 17px;border:1px solid #d9e3e9;border-radius:12px;background:#fff;min-height:120px}.card h3{font-size:15px;margin:0 0 8px;display:flex;gap:8px;align-items:center}.number{color:#148476;font-weight:bold}.card p{margin:0;color:#526c7b;font-size:12px}.proof{display:block;color:#147a6c;font-size:11px;margin-top:8px}.warning{border-left:4px solid #d29b44}.summary{min-height:232px}.summary h3{font-size:18px}.path{border-top:1px solid #e7edf1;padding-top:12px;margin-top:14px!important}.caption{margin:13px 0 8px;padding:11px 15px;border-radius:9px;background:#e9eff4;font-size:12px;color:#4d6678}footer{color:#617985;font-size:11px;display:flex;justify-content:space-between}.date{color:#9bc4cc}.result{font-weight:bold}.error{color:#ac3929}@media(max-width:850px){.grid{grid-template-columns:1fr}header{display:block}.scope{text-align:left;margin-top:8px}nav{flex-wrap:wrap}.stagebuttons{margin-left:0}main{padding:12px}.casehead{display:block}footer{display:block}}
+</style></head><body><main>
+<header><div><h1>三个完整电商业务 · 0.4.1</h1><p>买家前台测试下单 → 两店统一调度 → 模型 / 独立审批 → 平台回读 → 审计</p></div><div class="scope"><strong>Shopify 开发店铺 · Amazon 托管沙箱 · 真实模型</strong><br>合成买家与商家仓开账 · 无真实订单付款<br><span id="date" class="date"></span></div></header>
+<nav aria-label="案例"><button data-case="overview" aria-pressed="true">总览</button><button data-case="fulfillment">A · 德国履约</button><button data-case="aftersales">B · 法国撤销</button><button data-case="knowledge">C · 技能与异常</button><span id="pages" class="stagebuttons"></span></nav>
+<section id="content">读取公开记录…</section>
+<div class="caption"><strong>图片来源：</strong>真实接口验收记录的脱敏报告页面；不是平台后台或运营工作台原始截图。两种审批身份由同一操作者控制；本轮从 Web 指挥，没有重跑飞书客户端/卡片。</div>
+<footer><span>公开证据：journeys-acceptance.json · 私有账号、资源标识与原始截图不公开</span><span>Amazon 静态订单为官方样例；沙箱配送不代表生产物流。</span></footer>
+</main><script>
+const titles={fulfillment:'A · 德国买家跨渠道履约与物流更正',aftersales:'B · 法国买家撤销订单与两平台结案',knowledge:'C · 能效咨询、技能复用与异常履约处理'};
+const phaseNames=['下单与两店调度','逐项审批与业务处理','最终结果与审计'];
+let data, selected='overview', phase=0;
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function entry(c,id){const s=c.steps.find(s=>s.step===id);if(!s)throw Error('Missing report stage: '+id);return s;}
+function facts(c,id){return entry(c,id).facts;}
+function card(c,title,detail,ids,warning=false){if(ids.some(id=>!entry(c,id).passed))throw Error('Unverified stage');return {title,detail,ids,warning};}
+function common(c){const multi=facts(c,'start-multi'),stock=facts(c,'initial-reservation');return [
+card(c,'买家真实前台测试结账','网页来源与成功测试交易已核实；库存 '+facts(c,'buyer_checkout').inventory_before+' → '+facts(c,'buyer_checkout').inventory_after+'。',['buyer_checkout']),
+card(c,'独立批准 Amazon 虚拟开账','新 SKU 与入库分别审批；托管动态沙箱可用 '+facts(c,'virtual-opening').amazon_available+'。',['virtual-sku-result','virtual-stock-result','virtual-opening']),
+card(c,'同一指令选择两家店铺',multi.child_tasks+' 个逐店同步/分析子任务；'+multi.real_model_roles+' 份真实角色结果通过校验。静态订单标为官方样例。',['start-multi']),
+card(c,'明确当前订单与商品','核实新测试订单关联当前 SKU；单订单真实模型分析，不用其他案例替代证据。',['start-case-order','order-analysis']),
+card(c,'商家仓开账与订单预留','独立批准合成盘点 '+stock.on_hand+'；当前订单预留 '+stock.reserved+'，安全库存 '+stock.safety+'。',['opening-count-result','initial-reservation']),
+card(c,'FBA 与商家仓分离','FBA 独立只读池；不与商家仓合并数量，也不开放 Amazon 自发货库存写入。',['warehouse-separation'])];}
+function stages(c){if(phase===0)return common(c);const f=facts(c,'final-state');if(phase===2){let list=[
+card(c,'Shopify 最终状态','订单 '+f.shopify_outcome+'；可用库存 '+f.shopify_available+'，重新同步与回读一致。',['final-state']),
+card(c,'商家仓库存台账','实物 '+f.merchant_on_hand+'；当前订单预留 '+f.merchant_reserved+'。发货扣实物，取消释放预留。',['final-state']),
+card(c,'Amazon 最终回读','MCF '+f.amazon_status+'；FBA 可用 '+f.amazon_available+'、平台预留 '+f.amazon_reserved_observed+'。',['final-state'],c.id==='knowledge'),
+card(c,'审计与认证导出','当前案例审计链有效，可认证导出；写入保留执行意图与平台核实记录。',['audit-close'])];
+if(c.id==='fulfillment')list.push(card(c,'物流更正已核实','Shopify 合成运单更正独立审批并回读。未购买运单或验证真实快递运输。',['tracking-correct-result']));
+if(c.id==='aftersales')list.push(card(c,'原测试交易全额退款',facts(c,'refund-total').refund_amount+' USD；净测试收款 '+facts(c,'refund-total').net_test_payment+'；取消没有重复退款。',['refund-total']));
+if(c.id==='knowledge')list.push(card(c,'原渠道失败后人工批准后备','先验证 UNDELIVERABLE，再单独批准商家仓履约；不是自动双发。',['merchant-fallback-result','explicit-fallback']),card(c,'保留 FBA 库存核实项','平台仍显示可用 9、预留 1，未自动补回；商品修订说明已在真实前台确认。',['fba-inventory-review','frontpage'],true));
+return list;}
+if(c.id==='fulfillment')return [
+card(c,'创建德国沙箱 MCF','独立审批数量 '+facts(c,'mcf-initial').quantity+'、合成国家 '+facts(c,'mcf-initial').destination_country+'；回读 PROCESSING。',['mcf-create-result','mcf-initial']),
+card(c,'推进订单完成','另一成员批准动态沙箱状态 COMPLETE，执行后回读。',['mcf-complete-result']),
+card(c,'包裹正在派送','独立批准 OUT_FOR_DELIVERY，读取同一订单包裹状态。',['package-0-OUT_FOR_DELIVERY-result']),
+card(c,'包裹模拟交付','独立批准 DELIVERED；仅托管沙箱状态，不代表实际运输。',['package-0-DELIVERED-result']),
+card(c,'Shopify 履约','申请人自审批被拦截；另一成员批准当前测试订单履约。',['shopify-fulfill-result']),
+card(c,'物流更正单独审批','修改合成运单信息，独立审批后回读新值。',['tracking-correct-result'])];
+if(c.id==='aftersales')return [
+card(c,'创建法国沙箱 MCF','独立审批数量 1、合成国家 FR；回读 PROCESSING。',['mcf-create-result','mcf-initial']),
+card(c,'撤销原渠道配送','另一成员批准取消；回读 MCF CANCELLED。',['mcf-cancel-result']),
+card(c,'退回原测试交易','原交易全额 19.90 USD 独立审批；没有真实订单付款。',['shopify-refund-result']),
+card(c,'取消店铺订单并补库存','另行审批取消；不在取消时重复退款。',['shopify-cancel-result']),
+card(c,'核对金额与副作用','按数值核对退款，净测试收款 0；核实没有再次退款。',['refund-total']),
+card(c,'两店回读结案','订单取消，Shopify 和 FBA 可用均为 10，商家仓预留释放。',['final-state'])];
+return [
+card(c,'多店学习只建一个全局任务',facts(c,'support-learning').support_records+' 条合成记录 → '+facts(c,'support-learning').skill_drafts+' 个带证据草稿，初始关闭。',['support-learning']),
+card(c,'审核启用后同订单复用','德国/法国两个技能启用；真实知识角色对同一德国订单引用德国技能。',['skill-reuse','skill-reuse-evidence']),
+card(c,'拒绝未经核实的 A+++','审批人拒绝；Shopify 回读说明原值未变。',['unsafe-description-result','rejection-readback']),
+card(c,'批准有边界的说明','核对官方标签、向商家确认法国退货安排；真实前台说明一致。',['approved-description-result','frontpage']),
+card(c,'申请德国沙箱配送','独立批准数量 1、合成国家 DE；回读 PROCESSING。',['mcf-create-result','mcf-initial']),
+card(c,'配送异常保持实际证据','批准模拟 UNFULFILLABLE；包裹实际 UNDELIVERABLE，库存未推断补回。',['mcf-unfulfillable-result','fba-inventory-review'],true)];}
+function render(){if(!data)return;document.querySelectorAll('[data-case]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.case===selected)));const pages=document.getElementById('pages');pages.replaceChildren();if(selected!=='overview')phaseNames.forEach((name,i)=>{const b=document.createElement('button');b.textContent=(i+1)+' · '+name;b.setAttribute('aria-pressed',String(i===phase));b.onclick=()=>{phase=i;render();};pages.append(b);});
+let html='';if(selected==='overview'){html='<div class="casehead"><h2>三笔全新买家订单 · 多平台从起点进入</h2><span class="badge">三条链路完成，C 保留库存核实</span></div><div class="grid">';
+const outcomes={fulfillment:'Shopify 已履约，MCF COMPLETE，包裹 DELIVERED；物流更正与库存回读、审计完成。',aftersales:'MCF CANCELLED；全额测试退款与 Shopify 取消分别审批，库存恢复，没有重复退款。',knowledge:'同订单技能复用、说明拒绝/批准与前台确认；UNDELIVERABLE 后独立后备履约，FBA 核实项保留。'};
+data.cases.forEach(c=>{html+='<article class="card summary '+(c.inventory_review_required?'warning':'')+'"><h3>'+esc(titles[c.id])+'</h3><p>'+esc(outcomes[c.id])+'</p><p class="path">共同路径：前台测试结账 → Shopify + Amazon 同步/分析 → 订单与 SKU → 分仓台账 → 逐项审批 → 最终结果。</p><span class="proof">'+(c.inventory_review_required?'业务完成 · 仍需核实 FBA 9 / 1':'业务完成 · 审计链有效')+'</span></article>';});html+='</div>';
+}else{const c=data.cases.find(c=>c.id===selected);html='<div class="casehead"><h2>'+esc(titles[selected])+' · '+esc(phaseNames[phase])+'</h2><span class="badge '+(c.inventory_review_required?'warn':'')+'">'+(c.inventory_review_required?'保留库存核实项':'完整链路完成')+'</span></div><div class="grid">'+stages(c).map((s,i)=>'<article class="card '+(s.warning?'warning':'')+'"><h3><span class="number">'+(phase*6+i+1).toString().padStart(2,'0')+'</span>'+esc(s.title)+'</h3><p>'+esc(s.detail)+'</p><span class="proof">✓ '+s.ids.length+' 个记录阶段核对 · 来源见公开 JSON</span></article>').join('')+'</div>';}
+document.getElementById('content').innerHTML=html;}
+document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>{selected=b.dataset.case;phase=0;render();});
+fetch('journeys-acceptance.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(d.schema!==2||d.version!=='0.4.1')throw Error();data=d;document.getElementById('date').textContent=new Date(d.captured_at).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})+'（北京时间）';render();}).catch(()=>{document.getElementById('content').innerHTML='<p class="error">报告无法读取。请通过本机 HTTP 服务打开 docs，确认公开 JSON 在同目录。</p>';});
+</script></body></html>
