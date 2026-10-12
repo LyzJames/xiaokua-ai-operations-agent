@@ -29,3 +29,16 @@ release/
 setup.token
 coverage.xml
 htmlcov/
+
+# Local-only tests and account acceptance drivers; public output is reports.
+tests/
+conftest.py
+scripts/*acceptance*.py
+scripts/verify_integrations.py
+scripts/run_postgres_tests.py
+scripts/start_test_postgres.py
+scripts/summarize_tests.py
+scripts/check_publication.py
+scripts/probe_platforms.py
+scripts/inspect_shopify_schema.py
+scripts/package_release.py
