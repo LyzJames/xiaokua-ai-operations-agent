@@ -1,9 +1,0 @@
-{
-  "schema": 1,
-  "captured_at": "2026-10-12T17:48:48.106346+00:00",
-  "scope": "Own Shopify development-store credential loader and shared-pool mapping; no physical opening balance claimed",
-  "real_shopify_credential_mapping_verified": true,
-  "elapsed_under_one_second": true,
-  "external_writes": 0,
-  "physical_opening_balance_not_claimed": true
-}
