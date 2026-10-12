@@ -1,0 +1,451 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-12T07:08:16.835191+00:00",
+  "scope": "Real development-platform merchant journeys with synthetic buyers",
+  "real_shopify": true,
+  "real_feishu_sdk": true,
+  "real_model": true,
+  "real_money_used": false,
+  "checkout_source": "browser + Shopify test payment gateway",
+  "passed": true,
+  "cases": [
+    {
+      "id": "fulfillment",
+      "title": "德国买家下单、履约与物流更新",
+      "market": "DE",
+      "status": "passed",
+      "steps": [
+        {
+          "step": "buyer_checkout",
+          "passed": true,
+          "observed_at": "2026-10-12T06:12:34.665059+00:00",
+          "facts": {
+            "source_name": "web",
+            "test": true,
+            "successful_test_transaction": true
+          }
+        },
+        {
+          "step": "checkout_inventory_decrement",
+          "passed": true,
+          "observed_at": "2026-10-12T06:12:34.665079+00:00",
+          "facts": {
+            "before": 10,
+            "after": 9
+          }
+        },
+        {
+          "step": "F-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:13:38.992230+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "F-analysis",
+          "passed": true,
+          "observed_at": "2026-10-12T06:19:18.204203+00:00",
+          "facts": {
+            "model_roles": [
+              "deepseek",
+              "deepseek",
+              "deepseek"
+            ],
+            "explicit_order_scope": true,
+            "scoped_order_count": 1,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "F-analysis-report",
+          "passed": true,
+          "observed_at": "2026-10-12T06:19:18.492288+00:00",
+          "facts": {}
+        },
+        {
+          "step": "F-fulfill-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:16:01.243217+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "F-fulfill-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:20:31.533374+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "executed",
+            "fulfillment_status": "FULFILLED",
+            "tracking_matches": true
+          }
+        },
+        {
+          "step": "F-shipment-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:23:01.798175+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "F-tracking-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:23:42.727854+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "F-tracking-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:24:13.385860+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "executed",
+            "fulfillment_status": "FULFILLED",
+            "tracking_matches": true
+          }
+        },
+        {
+          "step": "F-close-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:25:19.317972+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "closed-business-outcome",
+          "passed": true,
+          "observed_at": "2026-10-12T07:08:12.221756+00:00",
+          "facts": {
+            "required_steps_present": true,
+            "final_outcome_verified": true,
+            "audit_valid": true,
+            "no_unresolved_actions": true,
+            "all_jobs_completed": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "aftersales",
+      "title": "法国买家下单后全额测试退款、取消与库存恢复",
+      "market": "FR",
+      "status": "passed",
+      "steps": [
+        {
+          "step": "buyer_checkout",
+          "passed": true,
+          "observed_at": "2026-10-12T06:27:54.383203+00:00",
+          "facts": {
+            "source_name": "web",
+            "test": true,
+            "successful_test_transaction": true
+          }
+        },
+        {
+          "step": "checkout_inventory_decrement",
+          "passed": true,
+          "observed_at": "2026-10-12T06:27:54.383244+00:00",
+          "facts": {
+            "before": 10,
+            "after": 9
+          }
+        },
+        {
+          "step": "A-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:28:19.015779+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "A-analysis",
+          "passed": true,
+          "observed_at": "2026-10-12T06:29:46.465849+00:00",
+          "facts": {
+            "model_roles": [
+              "deepseek",
+              "deepseek",
+              "deepseek"
+            ],
+            "explicit_order_scope": true,
+            "scoped_order_count": 1,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "A-analysis-report",
+          "passed": true,
+          "observed_at": "2026-10-12T06:29:46.752674+00:00",
+          "facts": {}
+        },
+        {
+          "step": "A-refund-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:31:25.485023+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "A-refund-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:31:59.420824+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "executed",
+            "refunded_amount": "19.9",
+            "net_payment": "0.0"
+          }
+        },
+        {
+          "step": "A-cancel-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:33:34.892819+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "A-cancel-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:34:11.428722+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "executed",
+            "cancelled": true,
+            "restored_inventory": 10,
+            "no_implicit_extra_refund": true
+          }
+        },
+        {
+          "step": "A-close-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:35:38.040236+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "closed-business-outcome",
+          "passed": true,
+          "observed_at": "2026-10-12T07:08:14.519742+00:00",
+          "facts": {
+            "required_steps_present": true,
+            "final_outcome_verified": true,
+            "audit_valid": true,
+            "no_unresolved_actions": true,
+            "all_jobs_completed": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "knowledge",
+      "title": "德国买家咨询、技能沉淀复用与商品说明改进",
+      "market": "DE",
+      "status": "passed",
+      "steps": [
+        {
+          "step": "buyer_checkout",
+          "passed": true,
+          "observed_at": "2026-10-12T06:36:51.291374+00:00",
+          "facts": {
+            "source_name": "web",
+            "test": true,
+            "successful_test_transaction": true
+          }
+        },
+        {
+          "step": "checkout_inventory_decrement",
+          "passed": true,
+          "observed_at": "2026-10-12T06:36:51.291411+00:00",
+          "facts": {
+            "before": 10,
+            "after": 9
+          }
+        },
+        {
+          "step": "C-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:37:12.598537+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "C-baseline",
+          "passed": true,
+          "observed_at": "2026-10-12T06:39:05.820141+00:00",
+          "facts": {
+            "model_roles": [
+              "deepseek",
+              "deepseek",
+              "deepseek"
+            ],
+            "explicit_order_scope": true,
+            "scoped_order_count": 1,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "C-baseline-report",
+          "passed": true,
+          "observed_at": "2026-10-12T06:39:06.023870+00:00",
+          "facts": {}
+        },
+        {
+          "step": "support-learning",
+          "passed": true,
+          "observed_at": "2026-10-12T06:49:27.568754+00:00",
+          "facts": {
+            "support_records": 10,
+            "evidence_drafts": 2,
+            "drafts_initially_inactive": true,
+            "de_skill_active": true,
+            "both_market_skills_active": true,
+            "evidence_count": 5
+          }
+        },
+        {
+          "step": "C-reuse",
+          "passed": true,
+          "observed_at": "2026-10-12T06:42:17.226413+00:00",
+          "facts": {
+            "model_roles": [
+              "deepseek",
+              "deepseek",
+              "deepseek"
+            ],
+            "explicit_order_scope": true,
+            "scoped_order_count": 1,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "C-reuse-report",
+          "passed": true,
+          "observed_at": "2026-10-12T06:42:17.427625+00:00",
+          "facts": {}
+        },
+        {
+          "step": "C-unsafe-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:43:36.820599+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "C-unsafe-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:44:09.281358+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "rejected",
+            "description_matches": true
+          }
+        },
+        {
+          "step": "C-description-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:45:25.456537+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "C-description-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:45:55.375384+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "executed",
+            "description_matches": true
+          }
+        },
+        {
+          "step": "C-frontpage",
+          "passed": true,
+          "observed_at": "2026-10-12T06:48:22.981917+00:00",
+          "facts": {
+            "browser_description_matches": true
+          }
+        },
+        {
+          "step": "C-fulfill-proposal",
+          "passed": true,
+          "observed_at": "2026-10-12T06:49:52.622091+00:00",
+          "facts": {
+            "waiting_for_approval": true,
+            "platform_unchanged": true,
+            "applicant_self_approval_denied": true
+          }
+        },
+        {
+          "step": "C-fulfill-result",
+          "passed": true,
+          "observed_at": "2026-10-12T06:50:28.578730+00:00",
+          "facts": {
+            "independent_approval": true,
+            "real_callback": true,
+            "status": "executed",
+            "fulfillment_status": "FULFILLED",
+            "tracking_matches": true
+          }
+        },
+        {
+          "step": "C-close-sync",
+          "passed": true,
+          "observed_at": "2026-10-12T06:51:21.885397+00:00",
+          "facts": {
+            "case_order_present": true,
+            "result_notification_sent": true
+          }
+        },
+        {
+          "step": "closed-business-outcome",
+          "passed": true,
+          "observed_at": "2026-10-12T07:08:16.834477+00:00",
+          "facts": {
+            "required_steps_present": true,
+            "final_outcome_verified": true,
+            "audit_valid": true,
+            "no_unresolved_actions": true,
+            "all_jobs_completed": true
+          }
+        }
+      ]
+    }
+  ]
+}

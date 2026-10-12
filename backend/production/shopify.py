@@ -75,6 +75,7 @@ class Shopify:
           id name test createdAt updatedAt cancelledAt tags currencyCode displayFinancialStatus displayFulfillmentStatus
           totalPriceSet{shopMoney{amount currencyCode}} totalRefundedSet{shopMoney{amount currencyCode}}
           netPaymentSet{shopMoney{amount currencyCode}} fulfillments{id status trackingInfo{number company url}}
+          lineItems(first:100){nodes{id quantity variant{id product{id}}} pageInfo{hasNextPage}}
         } pageInfo{hasNextPage endCursor}}}''',"orders",{"search":search})
 
     def variants(self):

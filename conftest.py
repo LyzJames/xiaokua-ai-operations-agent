@@ -1,4 +1,7 @@
-"""Produce privacy-safe acceptance summaries grouped by capability."""
+"""Root hooks keep category CLI options discoverable on repeated runs.
+
+Reports contain capability summaries only, never private test parameters.
+"""
 import json
 import os
 import platform

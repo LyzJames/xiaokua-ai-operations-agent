@@ -1,5 +1,6 @@
 """Native LangGraph fan-out with a SQL step journal, bounded context and provenance."""
 import time
+import re
 from decimal import Decimal
 from typing import Annotated, TypedDict
 from sqlalchemy import select, update
@@ -10,7 +11,7 @@ from .database import tasks, resources, analysis_steps, clock, row, canonical
 from .security import digest
 from .skills import retrieve
 
-CONTRACT_VERSION = "analysis-v3-1"
+CONTRACT_VERSION = "analysis-v3-3"
 ROLE_KEYS = ("orders", "inventory", "knowledge")
 ROLE_NAMES = {"orders": "订单分析 Agent", "inventory": "库存分析 Agent", "knowledge": "客服知识 Agent"}
 
@@ -33,6 +34,29 @@ def prepare(db, task):
     records=records[:10000]
     orders = [r["data"] for r in records if r["kind"] == "order"]
     variants = [r["data"] for r in records if r["kind"] == "variant"]
+    # An explicit order reference constrains every role before data reaches the
+    # model. Unknown references fail closed rather than silently analyzing the shop.
+    names = list(dict.fromkeys(re.findall(r"[#＃]([0-9]{1,24})(?![0-9])", task["command"])))
+    scope = {"type": "shop_snapshot", "order_count": len(orders)}
+    if names:
+        requested = {"#" + value for value in names}
+        selected = [o for o in orders if o.get("name") in requested]
+        if {o.get("name") for o in selected} != requested or len(selected) != len(requested):
+            raise ValueError("ORDER_SCOPE_NOT_SYNCED_OR_AMBIGUOUS")
+        if any(not o.get("lineItems", {}).get("nodes")
+               or o.get("lineItems", {}).get("pageInfo", {}).get("hasNextPage") is not False
+               or any(not ((line.get("variant") or {}).get("product") or {}).get("id")
+                      for line in o.get("lineItems", {}).get("nodes", [])) for o in selected):
+            raise ValueError("ORDER_PRODUCT_SCOPE_INCOMPLETE_SYNC_AGAIN")
+        products = {((line.get("variant") or {}).get("product") or {}).get("id")
+                    for o in selected for line in o.get("lineItems", {}).get("nodes", [])}
+        products.discard(None)
+        if not products:
+            raise ValueError("ORDER_PRODUCT_SCOPE_INCOMPLETE_SYNC_AGAIN")
+        orders = selected
+        variants = [v for v in variants if v.get("product", {}).get("id") in products]
+        scope = {"type": "explicit_orders", "order_count": len(orders), "order_names": sorted(requested),
+                 "product_count": len(products)}
     policies, retrieval = retrieve(db, task["tenant_id"], task["command"])
     stock = [{"sku": redact(str(v.get("sku") or ""))[:100], "quantity": v.get("inventoryQuantity")}
         for v in variants if type(v.get("inventoryQuantity")) is int and v["inventoryQuantity"] < 5]
@@ -41,6 +65,7 @@ def prepare(db, task):
         "refunded_order_count": sum(Decimal(o["totalRefundedSet"]["shopMoney"]["amount"]) > 0 for o in orders),
         "variant_count": len(variants), "low_stock_count": len(stock), "low_stock": stock[:40], "knowledge": policies,
         "snapshot_truncated":truncated}
+    statistics["scope"] = scope
     contexts = {
         "orders": {"statistics": {k: statistics[k] for k in ("order_count", "test_order_count", "unfulfilled_count", "refunded_order_count")},
             "evidence_ids": [o["id"] for o in orders[:10]]},
@@ -48,9 +73,24 @@ def prepare(db, task):
             "evidence_ids": [v["id"] for v in variants[:10]]},
         "knowledge": {"knowledge": policies, "evidence_ids": [p["id"] for p in policies]},
     }
+    contexts["orders"]["orders"] = [{"id": o["id"], "test": bool(o.get("test")),
+        "financial_status": o.get("displayFinancialStatus"), "fulfillment_status": o.get("displayFulfillmentStatus"),
+        "cancelled": bool(o.get("cancelledAt")), "refunded_amount": o["totalRefundedSet"]["shopMoney"]["amount"]}
+        for o in orders[:10]]
+    demand = {}
+    if scope["type"] == "explicit_orders":
+        for order in orders:
+            for line in order["lineItems"]["nodes"]:
+                variant_id = (line.get("variant") or {}).get("id")
+                if variant_id and type(line.get("quantity")) is int:
+                    demand[variant_id] = demand.get(variant_id, 0) + line["quantity"]
+    contexts["inventory"]["inventory"] = [{"id": v["id"], "sku": redact(str(v.get("sku") or ""))[:100],
+        "aggregate_available": v.get("inventoryQuantity"), "ordered_quantity": demand.get(v["id"])} for v in variants[:10]]
+    contexts["inventory"]["inventory_limitations"] = ["数量是已同步的跨地点汇总，不能证明收货地区可配送；履约前仍须平台核实。"]
     for context in contexts.values():
         context["command"] = redact(task["command"])[:2000]
         context["snapshot_truncated"]=truncated
+        context["scope"]=scope
     fallbacks = {
         "orders": (f"已同步 {len(orders)} 笔订单，其中 {statistics['unfulfilled_count']} 笔未履约。退款笔数不是退货率。",
             ["只有已同步快照，没有完整退货原因或退货率。"]),

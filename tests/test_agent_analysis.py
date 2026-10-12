@@ -41,6 +41,76 @@ def metrics():
     return {'attempts': 1, 'input_tokens': 100, 'output_tokens': 40, 'format': 'json', 'model': 'synthetic-model', 'reused': False}
 
 
+def test_explicit_order_scope_keeps_unrelated_orders_and_products_out_of_model(environment):
+    db, ops, task = environment
+    with db.transaction() as conn:
+        conn.execute(resources.update().where(resources.c.id == 'order-resource').values(data={
+            'id': 'gid://shopify/Order/1', 'name': '#1001', 'test': True,
+            'displayFulfillmentStatus': 'UNFULFILLED', 'totalRefundedSet': {'shopMoney': {'amount': '0'}},
+            'lineItems': {'nodes': [{'quantity': 1, 'variant': {'id': 'gid://shopify/ProductVariant/1', 'product': {'id': 'gid://shopify/Product/1'}}}], 'pageInfo': {'hasNextPage': False}}}))
+        conn.execute(resources.update().where(resources.c.id == 'variant-resource').values(data={
+            'id': 'gid://shopify/ProductVariant/1', 'product': {'id': 'gid://shopify/Product/1'},
+            'sku': 'CASE-BULB', 'inventoryQuantity': 9}))
+        conn.execute(resources.insert().values(id='unrelated-order', tenant_id=task['tenant_id'], connection_id='synthetic-shop',
+            kind='order', external_id='gid://shopify/Order/2', updated_at=clock(), data={
+                'id': 'gid://shopify/Order/2', 'name': '#1002', 'test': True,
+                'displayFulfillmentStatus': 'FULFILLED', 'totalRefundedSet': {'shopMoney': {'amount': '10'}}}))
+        conn.execute(resources.insert().values(id='unrelated-variant', tenant_id=task['tenant_id'], connection_id='synthetic-shop',
+            kind='variant', external_id='gid://shopify/ProductVariant/2', updated_at=clock(), data={
+                'id': 'gid://shopify/ProductVariant/2', 'product': {'id': 'gid://shopify/Product/2'},
+                'sku': 'UNRELATED', 'inventoryQuantity': 1}))
+    task = ops.submit({'id':'synthetic-operator','tenant_id':task['tenant_id']},
+        '分析德国订单 #1001 的履约、库存与能效咨询', 'analyze', {'use_ai': True}, 'synthetic-shop')
+    seen = []
+    def model(system, context, evidence):
+        seen.append(context)
+        return good(context), metrics()
+    result = AnalysisRunner(db, model).run(task)
+    assert result['statistics']['order_count'] == 1 and result['statistics']['refunded_order_count'] == 0
+    assert result['statistics']['variant_count'] == 1 and result['statistics']['low_stock_count'] == 0
+    assert result['statistics']['scope']['order_names'] == ['#1001']
+    assert 'gid://shopify/Order/2' not in repr(seen) and 'UNRELATED' not in repr(seen)
+    assert result['reports'][0]['evidence'] == ['gid://shopify/Order/1']
+    assert result['reports'][1]['evidence'] == ['gid://shopify/ProductVariant/1']
+    inventory_context = next(c for c in seen if 'inventory' in c)
+    assert inventory_context['inventory'] == [{'id':'gid://shopify/ProductVariant/1', 'sku':'CASE-BULB', 'aggregate_available':9, 'ordered_quantity':1}]
+    assert 'gid://shopify/Order/1' not in repr(inventory_context)
+
+
+def test_unknown_explicit_order_fails_before_any_model_call(environment):
+    db, ops, old = environment
+    task = ops.submit({'id':'synthetic-operator','tenant_id':old['tenant_id']},
+        '分析订单 #9999', 'analyze', {'use_ai': True}, 'synthetic-shop')
+    def unexpected(*args):
+        raise AssertionError('An unresolved order must not reach the model')
+    with pytest.raises(ValueError, match='ORDER_SCOPE_NOT_SYNCED'):
+        AnalysisRunner(db, unexpected).run(task)
+
+
+@pytest.mark.parametrize('incomplete', ['missing', 'truncated'])
+def test_one_incomplete_order_cannot_hide_behind_another_complete_order(environment, incomplete):
+    db, ops, old = environment
+    complete = {'id':'gid://shopify/Order/1','name':'#1001','test':True,
+        'displayFulfillmentStatus':'UNFULFILLED','totalRefundedSet':{'shopMoney':{'amount':'0'}},
+        'lineItems':{'nodes':[{'quantity':1,'variant':{'id':'gid://shopify/ProductVariant/1','product':{'id':'gid://shopify/Product/1'}}}],
+                     'pageInfo':{'hasNextPage':False}}}
+    other = {**complete,'id':'gid://shopify/Order/2','name':'#1002'}
+    if incomplete == 'missing':
+        other.pop('lineItems')
+    else:
+        other['lineItems'] = {**complete['lineItems'],'pageInfo':{'hasNextPage':True}}
+    with db.transaction() as conn:
+        conn.execute(resources.update().where(resources.c.id=='order-resource').values(data=complete))
+        conn.execute(resources.insert().values(id='incomplete-order',tenant_id=old['tenant_id'],connection_id='synthetic-shop',
+            kind='order',external_id=other['id'],updated_at=clock(),data=other))
+    task=ops.submit({'id':'synthetic-operator','tenant_id':old['tenant_id']},
+        '分析订单 #1001 与 #1002 的库存','analyze',{'use_ai':True},'synthetic-shop')
+    def unexpected(*args):
+        raise AssertionError('Incomplete linked orders must not reach the model')
+    with pytest.raises(ValueError,match='ORDER_PRODUCT_SCOPE_INCOMPLETE'):
+        AnalysisRunner(db,unexpected).run(task)
+
+
 def test_native_graph_parallel_nodes_receive_only_their_role_context(environment):
     db, ops, task = environment
     barrier = threading.Barrier(3)
