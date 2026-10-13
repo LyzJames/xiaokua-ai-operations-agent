@@ -84,6 +84,7 @@ class ProductSnapshot(Contract):
     description: str = ""
     available: int | None = None
     locations: list[InventoryLocation] = Field(default_factory=list)
+    platform_reserved: int | None = Field(default=None, ge=0)
     locations_complete: bool = False
     environment: Literal["production", "test", "sandbox_dynamic", "demo"]
     source: str
@@ -111,14 +112,6 @@ PROVIDERS = {
     "amazon": ProviderSpec("amazon", "Amazon", "connected_adapter",
         frozenset({"sync", "analyze", "chat", "mcf_create", "mcf_cancel", "sandbox_sku", "sandbox_stock", "sandbox_status", "sandbox_package"}),
         "selling_partner_lwa", "https://developer-docs.amazon/sp-api/docs/connecting-to-the-selling-partner-api"),
-    "taobao": ProviderSpec("taobao", "淘宝", "contract_only", frozenset(), "merchant_authorization",
-        "https://open.taobao.com/"),
-    "jd": ProviderSpec("jd", "京东", "contract_only", frozenset(), "merchant_authorization",
-        "https://open.jd.com/"),
-    "pinduoduo": ProviderSpec("pinduoduo", "拼多多", "contract_only", frozenset(), "merchant_authorization",
-        "https://open.pinduoduo.com/"),
-    "temu": ProviderSpec("temu", "TEMU", "contract_only", frozenset(), "merchant_authorization",
-        "https://partner.temu.com/"),
 }
 
 

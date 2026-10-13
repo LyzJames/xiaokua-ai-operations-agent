@@ -19,7 +19,7 @@ def approval_preview(action):
     if kind == "pool_adjust":
         return f"共享库存池：{p['pool_id']}\n实物在库：{before['on_hand']} → {p['quantity']}\n安全库存：{before['safety']} → {p['safety']}"
     if kind in ("sandbox_sku", "sandbox_stock", "mcf_create", "mcf_cancel", "sandbox_status", "sandbox_package"):
-        return "Amazon 动态沙箱操作\n" + json.dumps({key:value for key,value in p.items() if key in {"sku","quantity","order_id","package_id","status"}}, ensure_ascii=False)
+        return "Amazon 动态沙箱操作\n" + json.dumps({key:value for key,value in p.items() if key in {"sku","quantity","country","order_id","package_id","status"}}, ensure_ascii=False)
     if kind=="inventory":
         return f"库存数量：{before['quantity']} → {p['quantity']}\n库存项目：{p['item_id']}\n库存地点：{p['location_id']}"
     if kind=="product":

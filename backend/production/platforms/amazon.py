@@ -16,6 +16,11 @@ MARKETPLACES = {"ATVPDKIKX0DER": "na", "A2EUQ1WTGCTBG2": "na", "A1AM78C64UM0Y8":
     "A1VC38T7YXB528": "fe", "A39IBJ37TRP1C6": "fe", "A19VAU5U5O7RUS": "fe"}
 ORDER_PATH = "/orders/2026-01-01/orders"
 OUTBOUND_PATH = "/fulfillment/outbound/2026-07-04/orders"
+SANDBOX_DESTINATIONS = {
+    "US": {"addressLine1": "123 Test Street", "city": "Seattle", "stateOrRegion": "WA", "postalCode": "98101"},
+    "DE": {"addressLine1": "1 Teststrasse", "city": "Berlin", "stateOrRegion": "Berlin", "postalCode": "10115"},
+    "FR": {"addressLine1": "1 Rue de Test", "city": "Paris", "stateOrRegion": "Paris", "postalCode": "75001"},
+}
 SANDBOX_ORDER_FIXTURES = {
     "fe": {"createdAfter": "2024-12-25T00:00:00Z", "marketplaceIds": "A1VC38T7YXB528",
         "includedData": "BUYER,RECIPIENT,PROCEEDS,EXPENSE,PROMOTION,CANCELLATION,FULFILLMENT,PACKAGES"},
@@ -177,6 +182,7 @@ class AmazonAdapter:
         return [ProductSnapshot(provider="amazon", id="amazon:sku:" + item["sellerSku"], product_id=item.get("asin") or item["sellerSku"],
             inventory_item_id="amazon:sku:" + item["sellerSku"], sku=item["sellerSku"], title=item.get("productName") or item["sellerSku"],
             available=(item.get("inventoryDetails") or {}).get("fulfillableQuantity"),
+            platform_reserved=((item.get("inventoryDetails") or {}).get("reservedQuantity") or {}).get("totalReservedQuantity"),
             locations=[InventoryLocation(id="amazon:fba:" + self.marketplace, name="Amazon FBA", pool_type="platform",
                 available=(item.get("inventoryDetails") or {}).get("fulfillableQuantity"))], locations_complete=True,
             environment="sandbox_dynamic" if self.environment == "sandbox" else "production", source="Amazon FBA Inventory").model_dump()
@@ -189,7 +195,7 @@ class AmazonAdapter:
         if not item:
             raise PlatformError("AMAZON_SKU_NOT_FOUND")
         details = item.get("inventoryDetails") or {}
-        return {"sku": sku, "quantity": details.get("fulfillableQuantity"), "reserved": (details.get("reservedQuantity") or {}).get("totalReservedQuantity", 0)}
+        return {"sku": sku, "quantity": details.get("fulfillableQuantity"), "reserved": (details.get("reservedQuantity") or {}).get("totalReservedQuantity")}
 
     def inventory_position(self, item_id, location_id):
         if not item_id.startswith("amazon:sku:") or location_id != "amazon:fba:" + self.marketplace:
@@ -213,6 +219,8 @@ class AmazonAdapter:
     def mcf_matches(self, value, identifier, p):
         if value.get("orderId") != identifier:
             return False
+        if p.get("country") and value.get("destination", {}).get("deliveryAddress", {}).get("countryCode") != p["country"]:
+            return False
 
         try:
             return any(item.get("product", {}).get("productIdentifier", {}).get("amazonSku") == p["sku"]
@@ -222,7 +230,7 @@ class AmazonAdapter:
             return False
 
     def mcf_summary(self, value, identifier):
-        return {"order_id": identifier, "status": value.get("status"), "packages": [
+        return {"order_id": identifier, "status": value.get("status"), "destination_country": value.get("destination", {}).get("deliveryAddress", {}).get("countryCode"), "packages": [
             {"package_id": package.get("packageId"), "status": package.get("status")}
             for shipment in value.get("shipments", []) for package in shipment.get("packages", [])]}
 
@@ -230,6 +238,10 @@ class AmazonAdapter:
         if self.environment != "sandbox" or kind not in self.capabilities()["operations"]:
             raise PlatformError("AMAZON_OPERATION_NOT_OPEN")
         p = dict(payload)
+        if kind == "mcf_create":
+            p.setdefault("country", "US")
+            if not isinstance(p["country"], str) or p["country"] not in SANDBOX_DESTINATIONS:
+                raise PlatformError("AMAZON_SANDBOX_COUNTRY_INVALID")
         if kind == "sandbox_sku":
             if not isinstance(p.get("sku"), str) or not re.fullmatch(r"xiaokua-test-[A-Za-z0-9-]{1,60}", p["sku"]):
                 raise PlatformError("AMAZON_SANDBOX_SKU_GUARD")
@@ -285,7 +297,7 @@ class AmazonAdapter:
             body = {"orderId": identifier, "channel": "XIAOKUA", "origin": {"countryCode": "US"},
                 "fulfillmentConfiguration": {"serviceLevel": {"serviceTiers": ["STANDARD"]}, "action": "SHIP", "policy": "FILL_OR_KILL",
                     "services": {"packaging": {"packagingOption": "UNBRANDED"}}},
-                "destination": {"deliveryAddress": {"name": "Synthetic Buyer", "addressLine1": "123 Test Street", "city": "Seattle", "stateOrRegion": "WA", "postalCode": "98101", "countryCode": "US"}},
+                "destination": {"deliveryAddress": {"name": "Synthetic Buyer", "countryCode": p["country"], **SANDBOX_DESTINATIONS[p["country"]]}},
                 "lineItems": [{"lineItemId": "item-1", "product": {"productIdentifier": {"amazonSku": p["sku"]}}, "amount": {"unit": "EACHES", "value": str(p["quantity"])}}]}
             self.request("POST", OUTBOUND_PATH, body=body, key=key)
         elif kind == "mcf_cancel":

@@ -87,7 +87,7 @@ def prepare(db, task):
                 key = (record["connection_id"], line["variant_id"])
                 demand[key] = demand.get(key, 0) + line["ordered"]
     contexts["inventory"]["inventory"] = [{"id": evidence(r), "sku": redact(r["value"]["sku"])[:100],
-        "aggregate_available": r["value"]["available"], "ordered_quantity": demand.get((r["connection_id"], r["value"]["id"]))} for r in product_records[:10]]
+        "aggregate_available": r["value"]["available"], "platform_reserved": r["value"].get("platform_reserved"), "ordered_quantity": demand.get((r["connection_id"], r["value"]["id"]))} for r in product_records[:10]]
     contexts["inventory"]["inventory_limitations"] = ["数量是已同步的地点/平台仓快照，不能证明收货地区可配送；FBA 与商家仓分别管理。"]
     for context in contexts.values():
         context["command"] = redact(task["command"])[:2000]

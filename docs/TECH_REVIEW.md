@@ -30,11 +30,11 @@
 
 **技能可以跨工具审阅。** 下载的 SKILL.md 使用合法 ASCII 名称、用途说明和字符串元信息；技能包提供同名目录以及 `references/evidence.md`。没有脚本执行能力或预授工具权限。草稿状态保留，导出不表示自动启用。示例见 [标准技能目录](../examples/skills/de-energy-response/SKILL.md)。
 
-**测试结果服务于验收。** 自动化报告按业务闭环、权限与安全、Agent 分析、记忆与技能、恢复与发布分类；缺少 PostgreSQL 时明确标为部分运行。CI 也生成同样的分类摘要。公开结果不包含测试参数、异常文本、凭据、机器目录或真实平台标识。
+**测试结果服务于验收。** 自动化报告按业务闭环、权限与安全、Agent 分析、记忆与技能、恢复与发布分类；缺少 PostgreSQL 时明确标为部分运行。分类回归在测试者本机运行；公开 CI 验证应用构建，当前发布树不包含测试源码。公开结果不包含测试参数、异常文本、凭据、机器目录或真实平台标识。
 
 ## 真实模式与研究边界
 
-本轮使用授权账号验证了 Shopify 只读访问、飞书应用认证，并分别对 DeepSeek JSON 与 strict 模式发送合成内容，验证响应格式与引用检查。机器可读摘要见 [连接检查](live-readonly-check.json) 与 [strict 检查](live-strict-model-check.json)。没有重新发送平台消息或执行业务写入。
+此前 0.3 调研只检查 Shopify 读取、飞书认证和模型格式，不是完整业务。当前 0.4.1 三个新案例以真实前台测试订单、Web 多店指令、模型分析、逐项独立审批和平台回读贯穿，具体范围见 [当前报告](TEST_REPORT.md)。
 
 这些检查不替代飞书消息/卡片投递、Shopify 测试订单闭环或开放问题的模型质量评估。完整真实复现流程见 [接入指南](INTEGRATIONS.md)；基线与本轮证据范围见 [分类测试报告](TEST_REPORT.md)。
 
@@ -43,3 +43,9 @@
 ## 2026-10-13：多平台适配与真实沙箱复核
 
 按实际平台语义增加 adapter、能力声明、店铺范围分派和库存事务台账；保留单一审批/执行责任。订单采用 [Amazon Orders 当前版本](https://developer-docs.amazon.com/sp-api/docs/orders-api) 2026-01-01；MCF 采用 [2026-07-04 官方模型](https://github.com/amzn/selling-partner-api-models/blob/main/models/fulfillment-outbound-api-model/fulfillmentOutbound_2026-07-04.json)，按 [动态沙箱](https://developer-docs.amazon.com/sp-api/docs/fulfillment-outbound-dynamic-sandbox-guide) 验证创建、完成、取消和虚拟包裹交付。接口成功应答之后还需读数吻合，才能放行联动增量。其他平台仅在明确资格与官方文档后实现，不猜测私有接口。
+
+## 0.4.1：从三个完整案例反推协议与库存修正
+
+真实多店分析暴露 JSON 模式的结构失败，按 [DeepSeek 官方严格工具调用](https://api-docs.deepseek.com/guides/tool_calls/) 改为默认 strict_tools，并限制输出预算；本地证据与类型检查仍是最终判定。工具调用只承载分析结果，不授予模型付款或业务写入权限。失败角色保留明确的规则回退记录，修正后重新运行只读分析阶段。
+
+自然语言学习指令归到一个全局草稿作业，避免所选店铺重复学习；人工审核启用后才进入模型上下文。FBA 可用与预留分别展示，字段缺失为未知；按 [MCF 动态沙箱文档](https://developer-docs.amazon/sp-api/docs/fulfillment-outbound-dynamic-sandbox-guide) 与实际回读，订单失败/终态不推断库存补回。完整观察、修正与限制见 [当前测试报告](TEST_REPORT.md)。

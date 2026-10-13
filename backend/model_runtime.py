@@ -39,7 +39,7 @@ class ModelFailure(Exception):
 
 
 def output_format():
-    return os.getenv("DEEPSEEK_ANALYSIS_FORMAT", "json").strip().lower()
+    return os.getenv("DEEPSEEK_ANALYSIS_FORMAT", "strict_tools").strip().lower()
 
 
 def validate_finding(value, evidence):
@@ -74,7 +74,7 @@ def analyze_json(system, context, evidence):
         "max_tokens": MAX_OUTPUT_TOKENS, "messages": [
             {"role": "system", "content": system +
                 '\nReturn JSON: {"finding":"依据数据的结论","evidence":[],"limitations":[]}. '
-                "evidence 只能引用输入的 evidence_ids；存在证据时至少引用一条。"},
+                "只允许这三个字段。finding 必须是非空字符串，最多3500字符；evidence 最多10条，只能引用输入的 evidence_ids；存在证据时至少引用一条。limitations 是字符串数组，最多8条，每条最多500字符。"},
             {"role": "user", "content": json.dumps(context, ensure_ascii=False)}]}
     endpoint = MODEL_URL + "/chat/completions"
     if fmt == "strict_tools":

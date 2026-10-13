@@ -31,7 +31,7 @@ flowchart TD
 
 Shopify 原始业务字段为已有用户案例和维护工具保留，分析及 Web 展示使用公共快照。后续适配器存储严格校验的公共快照，不能将任意平台响应直接交给模型。
 
-注册入口位于 `platforms/registry.py` 的 `ADAPTER_BUILDERS`；平台目录声明接入阶段、认证类型和能力。当前淘宝、京东、拼多多、TEMU 都是 `contract_only`，默认没有网络适配器、没有写入能力。测试中注入的合成适配器可走公共审批和回读，这验证扩展契约，不能当作真实平台接通。
+注册入口位于 `platforms/registry.py` 的 `ADAPTER_BUILDERS`；平台目录声明接入阶段、认证类型和能力。当前仅注册 Shopify、Amazon 的实际适配器，没有未实现平台的占位目录或能力声明。Amazon 联通和扩展步骤见 [平台目录 README](../backend/production/platforms/README.md)。
 
 ## 指令与执行边界
 

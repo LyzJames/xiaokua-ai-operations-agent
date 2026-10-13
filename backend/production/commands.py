@@ -38,6 +38,8 @@ WRITE_WORDS = ("库存", "盘点", "收货", "入库", "发货", "履约", "运�
 
 def rule_plan(command):
     text = command.strip()
+    if re.search(r"(?:^|[\s，,：:])(?:学习|沉淀)(?:一下)?(?:客服|咨询|运营)?经验|(?:^|[\s，,：:])生成(?:客服)?技能(?:草稿)?", text):
+        return Plan(steps=[Step(kind="learn")])
     explicit_write = any(word in text for word in ("调整", "改为", "设置", "设为", "申请退款", "申请取消", "更新说明", "确认发货", "盘点为")) or bool(re.search(r"退款\s*[0-9]|取消\s*(?:订单|[#＃])", text))
     if any(word in text for word in ("分析", "检查", "查看", "咨询")) and not explicit_write:
         return Plan(steps=([Step(kind="sync")] if "同步" in text else []) + [Step(kind="analyze")])

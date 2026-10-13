@@ -18,9 +18,7 @@
 
 没有要求租用服务器。本机 Client Credentials 研究入口仅适用于平台允许的自有店铺应用；如果平台授权方式要求 HTTPS，请按其规则配置自己的回调。飞书长连接能在本机接收消息与卡片。
 
-```bash
-uv run python scripts/verify_integrations.py --platforms-readonly --model
-```
+在工作台建立自己的平台连接，提交同步与分析任务，并核对报告中的模型模式、来源与限制。完整操作顺序见 [三个用户案例](USER_JOURNEYS.md)。
 
 探针只读平台身份/订单访问，用合成资料测试模型，不发送消息或业务写入。输出只含状态和安全错误码；不会输出店铺、App ID、成员身份或 token。
 
@@ -99,17 +97,15 @@ FBA/MCF 是动态沙箱。在“商品与库存”选择 Amazon 沙箱店，依�
 
 动态 FBA 可售数量由平台维护，不能直接设置 FBA 实物库存。FBA 与自发货库存分别建池；当前不开放 Amazon 自发货库存设置。生产 Amazon 连接只读，真实 MCF 的目的地资料、角色、隐私范围、费用、通知和生产状态须单独验收后才能开放写入，不能通过改模型提示解除。
 
-生产商户还要完成自己的开发者角色与商户授权；更改角色后按官方流程重新取得相应授权。多商户产品应完成平台要求的分发/审核与 OAuth 安装，不能共享原型作者的测试凭据。完整复现和已观察到的数据差异见 [多平台验收](MULTI_PLATFORM_ACCEPTANCE.md)。
+生产商户还要完成自己的开发者角色与商户授权；更改角色后按官方流程重新取得相应授权。多商户产品应完成平台要求的分发/审核与 OAuth 安装，不能共享原型作者的测试凭据。完整复现和已观察到的数据差异见 [三个完整业务验收](TEST_REPORT.md)。
 
-## 淘宝、京东、拼多多和 TEMU
+## 新增平台
 
-这些平台尚未取得真实测试资格。当前仅定义应用内部公共快照、能力与执行契约，未实现平台专属签名、授权或真实商品/订单接口；界面标注为待资格。不能把合成契约测试视为已经接通。
-
-取得资格后，按各自官方平台文档实现 adapter 和负责人接入，明确店铺身份、销售模式、区域、权限包和库存语义，再验证真实读写。开发方法见 [跨平台架构](COMMERCE_ARCHITECTURE.md)。入口：[淘宝开放平台](https://open.taobao.com/)、[京东零售开放平台](https://open.jd.com/)、[拼多多开放平台](https://open.pinduoduo.com/)、[TEMU Partner](https://partner.temu.com/)。部分内容需要 JavaScript 或登录资格，本轮不据未公开文档猜测接口字段。
+当前没有其他平台的占位连接器。取得资格后仍需实现实际协议；Amazon 联通和扩展步骤见 [平台目录 README](../backend/production/platforms/README.md)。
 
 ## DeepSeek 与结构化分析
 
-在私有配置设置 `DEEPSEEK_API_KEY` 与服务商实际开放的 `DEEPSEEK_MODEL`。默认 `DEEPSEEK_ANALYSIS_FORMAT=json`，请求稳定 Chat Completions 的 JSON 对象；可以改为 `strict_tools`，调用官方 Beta `/beta/chat/completions` 的 strict function schema。更改 `.env` 后重启服务。
+在私有配置设置 `DEEPSEEK_API_KEY` 与服务商实际开放的 `DEEPSEEK_MODEL`。默认 `DEEPSEEK_ANALYSIS_FORMAT=strict_tools`，使用官方 Beta `/beta/chat/completions` 的严格 function schema。若自己的服务只支持 JSON 对象，可显式设置为 `json`；该兼容模式仍受本地 Schema 与证据校验约束。更改 `.env` 后重启服务。
 
 两种模式都在本地检查 `finding`、`evidence`、`limitations` 的类型、长度、多余字段和证据归属。strict 模式的 `submit_analysis` 只用于承载结果，不执行工具。Beta 不接受的长度限制由本地校验器实现。非法输出、鉴权失败和限流等原因会展示为明确的规则回退，不能视作真实推理成功。
 

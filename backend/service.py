@@ -1,3 +1,3 @@
-"""Deployment entry point. Simulation remains available as backend.main for regression tests."""
+"""Entry point for the standalone merchant application."""
 from .production.api import create_app
 app=create_app()

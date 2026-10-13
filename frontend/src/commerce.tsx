@@ -4,13 +4,13 @@ import {ArrowRight, Bot, Plus, ShieldCheck, RefreshCw, Link2} from 'lucide-react
 type Obj = Record<string, any>;
 type Api = (path: string, body?: unknown) => Promise<any>;
 type Run = (fn: () => Promise<any>, close?: boolean) => Promise<void>;
-const names: Obj = {shopify: 'Shopify', amazon: 'Amazon', taobao: '淘宝', jd: '京东', pinduoduo: '拼多多', temu: 'TEMU', feishu: '飞书'};
+const names: Obj = {shopify: 'Shopify', amazon: 'Amazon', feishu: '飞书'};
 export const platformName = (provider: string) => names[provider] || provider;
 export const storeName = (store?: Obj) => store ? `${platformName(store.provider)} · ${store.info?.label || store.info?.shop?.name || '已授权店铺'}` : '已解除的店铺';
 
 export function ApprovalSummary({action, data}: {action: Obj; data: Obj}) {
   const p=action.payload, b=action.before;
-  const change=action.kind==='inventory' ? `可售库存 ${b.quantity} → ${p.quantity}` : action.kind==='pool_adjust' ? `实物在库 ${b.on_hand} → ${p.quantity} · 安全库存 ${p.safety}` : action.kind==='refund' ? `原交易退款 ${p.amount} ${p.currency}` : action.kind==='sandbox_stock' ? `${p.sku} 增加 ${p.quantity} 件虚拟库存` : action.kind==='mcf_create' ? `${p.sku} 沙箱履约 ${p.quantity} 件` : action.kind==='sandbox_status' ? `${b.status} → ${p.status}` : action.kind==='sandbox_sku' ? `创建测试 SKU ${p.sku}` : '';
+  const change=action.kind==='inventory' ? `可售库存 ${b.quantity} → ${p.quantity}` : action.kind==='pool_adjust' ? `实物在库 ${b.on_hand} → ${p.quantity} · 安全库存 ${p.safety}` : action.kind==='refund' ? `原交易退款 ${p.amount} ${p.currency}` : action.kind==='sandbox_stock' ? `${p.sku} 增加 ${p.quantity} 件虚拟库存` : action.kind==='mcf_create' ? `${p.sku} 沙箱履约 ${p.quantity} 件 · 合成收货国家 ${p.country || "US"}` : action.kind==='sandbox_status' ? `${b.status} → ${p.status}` : action.kind==='sandbox_sku' ? `创建测试 SKU ${p.sku}` : '';
   return <div className="p-action-summary"><small>{action.kind==='pool_adjust'?'物理共享仓库':storeName(data.connections.find((c:Obj)=>c.id===action.connection_id))}</small>{change&&<strong>{change}</strong>}</div>;
 }
 
@@ -75,6 +75,7 @@ export function AmazonSandbox({data, connectionId, api, run, busy}: {data: Obj; 
   const [sku, setSku] = useState('');
   const [newSku, setNewSku] = useState('xiaokua-test-');
   const [quantity, setQuantity] = useState('1');
+  const [country, setCountry] = useState('US');
   const [order, setOrder] = useState('');
   const [status, setStatus] = useState('COMPLETE');
   const [packageId, setPackageId] = useState('');
@@ -90,9 +91,10 @@ export function AmazonSandbox({data, connectionId, api, run, busy}: {data: Obj; 
     <div className="p-config-grid">
       <label className="p-field"><span>已同步的 FBA 测试 SKU</span><select value={sku} onChange={e => setSku(e.target.value)}><option value="">选择测试 SKU</option>{items.map((v: Obj) => <option key={v.id} value={v.normalized.sku}>{v.normalized.sku} · 可用 {v.normalized.available ?? '未知'}</option>)}</select></label>
       <label className="p-field"><span>数量</span><input type="number" min={1} max={1000000} value={quantity} onChange={e => setQuantity(e.target.value)}/></label>
+      <label className="p-field"><span>沙箱合成收货国家</span><select value={country} onChange={e => setCountry(e.target.value)}><option value="US">美国</option><option value="DE">德国</option><option value="FR">法国</option></select></label>
     </div>
     <div className="p-card-foot"><button className="p-button" disabled={busy || !canOperate || !sku} onClick={() => propose('sandbox_stock', {sku, quantity: Number(quantity)})}>申请增加虚拟库存</button>
-      <button className="p-button primary" disabled={busy || !canOperate || !sku} onClick={() => propose('mcf_create', {sku, quantity: Number(quantity)})}>申请 MCF 履约</button></div>
+      <button className="p-button primary" disabled={busy || !canOperate || !sku} onClick={() => propose('mcf_create', {sku, quantity: Number(quantity), country})}>申请 MCF 履约</button></div>
     <div className="p-config-grid">
       <label className="p-field"><span>本店沙箱 MCF 编号（从审批执行结果复制）</span><input value={order} onChange={e => setOrder(e.target.value)} maxLength={40}/></label>
       <label className="p-field"><span>沙箱目标状态</span><select value={status} onChange={e => setStatus(e.target.value)}><option value="PROCESSING">PROCESSING</option><option value="COMPLETE">COMPLETE</option><option value="COMPLETE_PARTIAL">COMPLETE_PARTIAL</option><option value="UNFULFILLABLE">UNFULFILLABLE</option></select></label>
@@ -130,7 +132,7 @@ export function CommerceInventory({data, records, canOperate, busy, sync, open}:
       return (product.locations.length ? product.locations : [null]).map((loc: Obj | null, index: number) => {
         const mapped = data.shared_inventory.mappings.some((m: Obj) => m.connection_id === record.connection_id && m.item_id === product.inventory_item_id && m.location_id === loc?.id);
         return <tr key={record.id+index}><td><strong>{product.title}</strong><small>{product.sku} · {platformName(product.provider)}</small><small>{environments[product.environment]}</small></td><td>{product.price.amount ?? '未提供'} {product.price.currency || ''}</td>
-          <td>{loc?.name || '未激活'}{loc?.pool_type === 'platform' && <small>平台仓 · 独立库存</small>}</td><td>{loc?.available ?? '未知'}{!product.locations_complete && <small>地点未全部载入</small>}</td>
+          <td>{loc?.name || '未激活'}{loc?.pool_type === 'platform' && <small>平台仓 · 独立库存</small>}</td><td>{loc?.available ?? '未知'}{loc?.pool_type === 'platform' && <small>平台预留：{product.platform_reserved ?? '未知'}</small>}{!product.locations_complete && <small>地点未全部载入</small>}</td>
           <td><div className="p-inline-buttons">{operations.includes('inventory') && <button className="p-text" disabled={!canOperate || busy || !loc || mapped} onClick={() => open('inventory', {item_id:product.inventory_item_id,location_id:loc?.id,quantity:Math.max(0,loc?.available || 0)}, record)}>{mapped ? '共享池统一分配' : '调整库存'}</button>}
             {operations.includes('product') && <button className="p-text" disabled={!canOperate || busy} onClick={() => open('product', {product_id:product.product_id,description:product.description}, record)}>更新说明</button>}
             {!operations.includes('inventory') && <small>FBA 库存读取；测试写入见下方沙箱</small>}</div></td></tr>;
@@ -158,8 +160,8 @@ export function SharedStock({data, api, run, busy}: {data: Obj; api: Api; run: R
   return <>
     <div className="p-banner"><ShieldCheck/><div><h3>一个物理库存池，明确分配给各店。</h3><p>订单预留、发货扣实物、取消释放；退款不直接入库。跨店变更先减后增，各写入独立审批。</p></div></div>
     <article className="p-card"><div className="p-card-head"><h2>库存池</h2><RefreshCw size={20}/></div>
-      <div className="p-table-wrap"><table><thead><tr><th>仓库 / 主 SKU</th><th>在库 / FBA 可用</th><th>未发货预留</th><th>安全库存</th><th>可分配</th><th>状态</th></tr></thead><tbody>
-        {state.pools.map((p: Obj) => <tr key={p.id}><td><strong>{p.name}</strong><small>{p.warehouse} · {p.sku} · {p.pool_type === 'platform' ? '平台仓只读' : '商家仓'}</small></td><td>{p.on_hand}</td><td>{p.reserved}</td><td>{p.safety}</td><td>{p.available}</td><td>{!p.initialized ? '待盘点审批' : p.frozen ? '冻结增库存' : '已启用'}{p.issues.length > 0 && <small>{p.issues.join(' · ')}</small>}</td></tr>)}
+      <div className="p-table-wrap"><table><thead><tr><th>仓库 / 主 SKU</th><th>在库 / FBA 可用</th><th>商家仓订单预留</th><th>安全库存</th><th>可分配</th><th>状态</th></tr></thead><tbody>
+        {state.pools.map((p: Obj) => <tr key={p.id}><td><strong>{p.name}</strong><small>{p.warehouse} · {p.sku} · {p.pool_type === 'platform' ? '平台仓只读' : '商家仓'}</small></td><td>{p.on_hand}</td><td>{p.pool_type === 'platform' ? '平台指标见库存页' : p.reserved}</td><td>{p.safety}</td><td>{p.available}</td><td>{!p.initialized ? '待盘点审批' : p.frozen ? '冻结增库存' : '已启用'}{p.issues.length > 0 && <small>{p.issues.join(' · ')}</small>}</td></tr>)}
       </tbody></table></div>
       {!state.pools.length && <p className="p-note">负责人先创建池并映射平台规格，再申请初始盘点、由另一成员审批，核对现有未发货订单。</p>}
     </article>

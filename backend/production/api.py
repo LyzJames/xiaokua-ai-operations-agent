@@ -57,7 +57,7 @@ class TaskBody(BaseModel):
 WRITE_FIELDS = {"inventory": {"item_id","location_id","quantity"}, "product": {"product_id","description"},
     "fulfill": {"order_id","company","number"}, "tracking": {"order_id","fulfillment_id","company","number"},
     "cancel": {"order_id","reason"}, "refund": {"order_id","amount","currency"}, "pool_adjust": {"pool_id","quantity","safety"},
-    "sandbox_sku": {"sku"}, "sandbox_stock": {"sku","quantity"}, "mcf_create": {"sku","quantity"}, "mcf_cancel": {"order_id"},
+    "sandbox_sku": {"sku"}, "sandbox_stock": {"sku","quantity"}, "mcf_create": {"sku","quantity","country"}, "mcf_cancel": {"order_id"},
     "sandbox_status": {"order_id","status"}, "sandbox_package": {"order_id","package_id","status"}}
 class DecisionBody(BaseModel):
     approved:bool
@@ -146,7 +146,7 @@ def create_app(settings=None,client_factory=None):
         if settings.worker_enabled: worker.start()
         yield
         worker.stop();db.engine.dispose()
-    app=FastAPI(title="小跨运营官 · 多平台商户服务",version="0.4.0",lifespan=lifespan,docs_url=None,openapi_url=None)
+    app=FastAPI(title="小跨运营官 · 多平台商户服务",version="0.4.1",lifespan=lifespan,docs_url=None,openapi_url=None)
     app.state.db,app.state.vault,app.state.ops,app.state.feishu,app.state.worker,app.state.settings=db,vault,ops,feishu,worker,settings
     hosts=[urlparse(settings.public_url).hostname,"127.0.0.1","localhost","testserver"]
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=list(set(hosts)))
@@ -327,7 +327,7 @@ def create_app(settings=None,client_factory=None):
             "orders":[r for r in rs if r["kind"]=="order"],"variants":[r for r in rs if r["kind"]=="variant"],
             "tasks":db.list(tasks,t,100),"actions":db.list(actions,t,100),"knowledge":db.list(knowledge,t,200),
             "members":members,"audit":db.list(audits,t,100),"audit_verification":db.verify(t),"jobs":db.list(jobs,t,60),
-            "privacy_requests":privacy,"reserved":["Meta Ads","采购支付"],"platforms":[spec.public() for spec in PROVIDERS.values()],
+            "privacy_requests":privacy,"reserved":[],"platforms":[spec.public() for spec in PROVIDERS.values()],
             "shared_inventory":ops.shared.state(t),"deployment":{"database":db.engine.dialect.name,"https":settings.public_url.startswith("https://"),"worker_enabled":settings.worker_enabled}}
 
     @app.post("/api/commands", status_code=201)

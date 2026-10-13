@@ -20,8 +20,6 @@ def connection_adapter(db, vault, connection_id, tenant_id, client_factory=None)
     if not connection or connection["status"] != "active":
         raise PlatformError("COMMERCE_CONNECTION_INACTIVE_OR_FOREIGN")
     provider = provider_spec(connection["provider"])
-    if provider.stage == "contract_only" and not client_factory:
-        raise PlatformError("PROVIDER_NOT_INTEGRATED")
     if client_factory:
         native = client_factory(connection_id, tenant_id)
         if hasattr(native, "snapshot_orders") or hasattr(native, "prepare_action"):
@@ -54,5 +52,4 @@ def connection_capabilities(connection):
         operations &= {"sync", "analyze", "chat"}
     return {"provider": provider.key, "name": provider.name, "stage": provider.stage,
             "operations": sorted(operations), "environment": connection["info"].get("environment", "demo" if connection["info"].get("demo") else "production_or_test"),
-            "inventory_allocation": "inventory" in operations,
-            "qualification_required": provider.stage == "contract_only"}
+            "inventory_allocation": "inventory" in operations}

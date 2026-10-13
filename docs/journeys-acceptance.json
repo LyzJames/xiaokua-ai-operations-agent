@@ -1,451 +1,860 @@
 {
-  "schema": 1,
-  "captured_at": "2026-10-12T07:08:16.835191+00:00",
-  "scope": "Real development-platform merchant journeys with synthetic buyers",
-  "real_shopify": true,
-  "real_feishu_sdk": true,
-  "real_model": true,
-  "real_money_used": false,
-  "checkout_source": "browser + Shopify test payment gateway",
-  "passed": true,
+  "schema": 2,
+  "version": "0.4.1",
+  "captured_at": "2026-10-12T20:44:01.190169+00:00",
+  "scope": "Three new Shopify storefront test orders; hosted Amazon sandbox and configured real model, driven through the real application HTTP and worker paths",
+  "source_policy": {
+    "shopify": "real development-store browser checkout + test gateway",
+    "amazon_orders": "official hosted static fixture",
+    "amazon_fba_mcf": "hosted dynamic sandbox",
+    "model": "configured real DeepSeek API / strict_tools",
+    "approval": "two synthetic application members controlled by one test operator; no fabricated callbacks",
+    "physical_opening_balance": "synthetic warehouse fixture; not a measured real warehouse count"
+  },
+  "real_order_payments": 0,
+  "production_amazon_writes": 0,
   "cases": [
     {
       "id": "fulfillment",
-      "title": "德国买家下单、履约与物流更新",
+      "title": "A：德国买家跨渠道履约与物流更正",
       "market": "DE",
-      "status": "passed",
+      "status": "completed",
+      "inventory_review_required": false,
       "steps": [
         {
           "step": "buyer_checkout",
+          "title": "买家前台测试结账，库存 10 → 9",
           "passed": true,
-          "observed_at": "2026-10-12T06:12:34.665059+00:00",
+          "observed_at": "2026-10-12T19:15:15.185314+00:00",
+          "source": "Shopify order + browser checkout",
           "facts": {
             "source_name": "web",
             "test": true,
-            "successful_test_transaction": true
+            "successful_test_transaction": true,
+            "inventory_before": 10,
+            "inventory_after": 9
           }
         },
         {
-          "step": "checkout_inventory_decrement",
+          "step": "virtual-sku-result",
+          "title": "独立审批与平台核实：sandbox_sku",
           "passed": true,
-          "observed_at": "2026-10-12T06:12:34.665079+00:00",
+          "observed_at": "2026-10-12T19:40:23.501843+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "before": 10,
-            "after": 9
+            "operation": "sandbox_sku",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "F-sync",
+          "step": "virtual-stock-result",
+          "title": "独立审批与平台核实：sandbox_stock",
           "passed": true,
-          "observed_at": "2026-10-12T06:13:38.992230+00:00",
+          "observed_at": "2026-10-12T19:40:23.503074+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
+            "operation": "sandbox_stock",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "F-analysis",
+          "step": "virtual-opening",
+          "title": "Amazon 动态 FBA 合成库存就绪",
           "passed": true,
-          "observed_at": "2026-10-12T06:19:18.204203+00:00",
+          "observed_at": "2026-10-12T19:40:25.292380+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "model_roles": [
-              "deepseek",
-              "deepseek",
-              "deepseek"
+            "amazon_available": 10
+          }
+        },
+        {
+          "step": "start-multi",
+          "title": "一个指令调度 Shopify 与 Amazon，两店同步及三角色分析完成",
+          "passed": true,
+          "observed_at": "2026-10-12T19:40:25.295235+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "platforms": [
+              "shopify_development",
+              "amazon_hosted_sandbox"
             ],
-            "explicit_order_scope": true,
-            "scoped_order_count": 1,
-            "result_notification_sent": true
+            "child_tasks": 4,
+            "real_model_roles": 6,
+            "amazon_orders": "official_static_fixture"
           }
         },
         {
-          "step": "F-analysis-report",
+          "step": "start-case-order",
+          "title": "当前案例买家订单与本店 SKU 出现在实际同步快照",
           "passed": true,
-          "observed_at": "2026-10-12T06:19:18.492288+00:00",
-          "facts": {}
-        },
-        {
-          "step": "F-fulfill-proposal",
-          "passed": true,
-          "observed_at": "2026-10-12T06:16:01.243217+00:00",
+          "observed_at": "2026-10-12T19:40:25.296850+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
+            "test_order": true,
+            "case_sku_linked": true
           }
         },
         {
-          "step": "F-fulfill-result",
+          "step": "opening-count-result",
+          "title": "独立审批与平台核实：pool_adjust",
           "passed": true,
-          "observed_at": "2026-10-12T06:20:31.533374+00:00",
+          "observed_at": "2026-10-12T19:40:25.297753+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "independent_approval": true,
-            "real_callback": true,
+            "operation": "pool_adjust",
             "status": "executed",
-            "fulfillment_status": "FULFILLED",
-            "tracking_matches": true
+            "source_environment": "synthetic_physical_opening_balance",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "F-shipment-sync",
+          "step": "initial-reservation",
+          "title": "独立批准合成盘点后，为当前真实测试订单预留一件",
           "passed": true,
-          "observed_at": "2026-10-12T06:23:01.798175+00:00",
+          "observed_at": "2026-10-12T19:40:25.318672+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
+            "physical_balance_is_synthetic_fixture": true,
+            "on_hand": 15,
+            "reserved": 1,
+            "safety": 5
           }
         },
         {
-          "step": "F-tracking-proposal",
+          "step": "warehouse-separation",
+          "title": "商家仓与 FBA 独立建池，不把平台可售量视为同一实物仓",
           "passed": true,
-          "observed_at": "2026-10-12T06:23:42.727854+00:00",
+          "observed_at": "2026-10-12T19:40:25.319201+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
+            "fba_read_only": true
           }
         },
         {
-          "step": "F-tracking-result",
+          "step": "order-analysis",
+          "title": "指定本次买家订单，真实模型输出带证据的三角色报告",
           "passed": true,
-          "observed_at": "2026-10-12T06:24:13.385860+00:00",
+          "observed_at": "2026-10-12T19:40:25.320360+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "independent_approval": true,
-            "real_callback": true,
+            "real_model_roles": 3,
+            "specific_case_order": true
+          }
+        },
+        {
+          "step": "mcf-create-result",
+          "title": "独立审批与平台核实：mcf_create",
+          "passed": true,
+          "observed_at": "2026-10-12T19:40:30.369538+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "mcf_create",
             "status": "executed",
-            "fulfillment_status": "FULFILLED",
-            "tracking_matches": true
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "F-close-sync",
+          "step": "mcf-initial",
+          "title": "FBA 虚拟履约回读同一 SKU、数量、国家及 PROCESSING",
           "passed": true,
-          "observed_at": "2026-10-12T06:25:19.317972+00:00",
+          "observed_at": "2026-10-12T19:40:30.370826+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
+            "amazon_status": "PROCESSING",
+            "quantity": 1,
+            "destination_country": "DE"
           }
         },
         {
-          "step": "closed-business-outcome",
+          "step": "mcf-complete-result",
+          "title": "独立审批与平台核实：sandbox_status",
           "passed": true,
-          "observed_at": "2026-10-12T07:08:12.221756+00:00",
+          "observed_at": "2026-10-12T19:40:38.432858+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "required_steps_present": true,
-            "final_outcome_verified": true,
+            "operation": "sandbox_status",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "package-0-OUT_FOR_DELIVERY-result",
+          "title": "独立审批与平台核实：sandbox_package",
+          "passed": true,
+          "observed_at": "2026-10-12T19:40:45.503436+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "sandbox_package",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "package-0-DELIVERED-result",
+          "title": "独立审批与平台核实：sandbox_package",
+          "passed": true,
+          "observed_at": "2026-10-12T19:40:52.558396+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "sandbox_package",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "shopify-fulfill-result",
+          "title": "独立审批与平台核实：fulfill",
+          "passed": true,
+          "observed_at": "2026-10-12T19:41:01.628526+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "fulfill",
+            "status": "executed",
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "tracking-correct-result",
+          "title": "独立审批与平台核实：tracking",
+          "passed": true,
+          "observed_at": "2026-10-12T19:41:17.704800+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "tracking",
+            "status": "executed",
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "final-state",
+          "title": "两店最终回读与商家仓账本吻合",
+          "passed": true,
+          "observed_at": "2026-10-12T19:41:30.896180+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "shopify_outcome": "fulfilled",
+            "shopify_available": 9,
+            "amazon_status": "COMPLETE",
+            "amazon_available": 9,
+            "amazon_reserved_observed": 1,
+            "merchant_on_hand": 14,
+            "merchant_reserved": 0
+          }
+        },
+        {
+          "step": "audit-close",
+          "title": "当前案例任务结案，可导出报告及有效审计链",
+          "passed": true,
+          "observed_at": "2026-10-12T19:41:30.906398+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
             "audit_valid": true,
-            "no_unresolved_actions": true,
-            "all_jobs_completed": true
+            "audit_exported": true
           }
         }
       ]
     },
     {
       "id": "aftersales",
-      "title": "法国买家下单后全额测试退款、取消与库存恢复",
+      "title": "B：法国买家撤销订单与两平台结案",
       "market": "FR",
-      "status": "passed",
+      "status": "completed",
+      "inventory_review_required": false,
       "steps": [
         {
           "step": "buyer_checkout",
+          "title": "买家前台测试结账，库存 10 → 9",
           "passed": true,
-          "observed_at": "2026-10-12T06:27:54.383203+00:00",
+          "observed_at": "2026-10-12T19:51:24.124946+00:00",
+          "source": "Shopify order + browser checkout",
           "facts": {
             "source_name": "web",
             "test": true,
-            "successful_test_transaction": true
+            "successful_test_transaction": true,
+            "inventory_before": 10,
+            "inventory_after": 9
           }
         },
         {
-          "step": "checkout_inventory_decrement",
+          "step": "virtual-sku-result",
+          "title": "独立审批与平台核实：sandbox_sku",
           "passed": true,
-          "observed_at": "2026-10-12T06:27:54.383244+00:00",
+          "observed_at": "2026-10-12T19:51:36.549658+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "before": 10,
-            "after": 9
+            "operation": "sandbox_sku",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "A-sync",
+          "step": "virtual-stock-result",
+          "title": "独立审批与平台核实：sandbox_stock",
           "passed": true,
-          "observed_at": "2026-10-12T06:28:19.015779+00:00",
+          "observed_at": "2026-10-12T19:51:44.625019+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
+            "operation": "sandbox_stock",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "A-analysis",
+          "step": "virtual-opening",
+          "title": "Amazon 动态 FBA 合成库存就绪",
           "passed": true,
-          "observed_at": "2026-10-12T06:29:46.465849+00:00",
+          "observed_at": "2026-10-12T19:51:46.443034+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "model_roles": [
-              "deepseek",
-              "deepseek",
-              "deepseek"
+            "amazon_available": 10
+          }
+        },
+        {
+          "step": "start-multi",
+          "title": "一个指令调度 Shopify 与 Amazon，两店同步及三角色分析完成",
+          "passed": true,
+          "observed_at": "2026-10-12T19:52:01.492240+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "platforms": [
+              "shopify_development",
+              "amazon_hosted_sandbox"
             ],
-            "explicit_order_scope": true,
-            "scoped_order_count": 1,
-            "result_notification_sent": true
+            "child_tasks": 4,
+            "real_model_roles": 6,
+            "amazon_orders": "official_static_fixture"
           }
         },
         {
-          "step": "A-analysis-report",
+          "step": "start-case-order",
+          "title": "当前案例买家订单与本店 SKU 出现在实际同步快照",
           "passed": true,
-          "observed_at": "2026-10-12T06:29:46.752674+00:00",
-          "facts": {}
-        },
-        {
-          "step": "A-refund-proposal",
-          "passed": true,
-          "observed_at": "2026-10-12T06:31:25.485023+00:00",
+          "observed_at": "2026-10-12T19:52:01.494269+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
+            "test_order": true,
+            "case_sku_linked": true
           }
         },
         {
-          "step": "A-refund-result",
+          "step": "opening-count-result",
+          "title": "独立审批与平台核实：pool_adjust",
           "passed": true,
-          "observed_at": "2026-10-12T06:31:59.420824+00:00",
+          "observed_at": "2026-10-12T19:52:03.589275+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "independent_approval": true,
-            "real_callback": true,
+            "operation": "pool_adjust",
             "status": "executed",
-            "refunded_amount": "19.9",
-            "net_payment": "0.0"
+            "source_environment": "synthetic_physical_opening_balance",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "A-cancel-proposal",
+          "step": "initial-reservation",
+          "title": "独立批准合成盘点后，为当前真实测试订单预留一件",
           "passed": true,
-          "observed_at": "2026-10-12T06:33:34.892819+00:00",
+          "observed_at": "2026-10-12T19:52:03.623062+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
+            "physical_balance_is_synthetic_fixture": true,
+            "on_hand": 15,
+            "reserved": 1,
+            "safety": 5
           }
         },
         {
-          "step": "A-cancel-result",
+          "step": "warehouse-separation",
+          "title": "商家仓与 FBA 独立建池，不把平台可售量视为同一实物仓",
           "passed": true,
-          "observed_at": "2026-10-12T06:34:11.428722+00:00",
+          "observed_at": "2026-10-12T19:52:03.654865+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "independent_approval": true,
-            "real_callback": true,
+            "fba_read_only": true
+          }
+        },
+        {
+          "step": "order-analysis",
+          "title": "指定本次买家订单，真实模型输出带证据的三角色报告",
+          "passed": true,
+          "observed_at": "2026-10-12T19:52:09.675568+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "real_model_roles": 3,
+            "specific_case_order": true
+          }
+        },
+        {
+          "step": "mcf-create-result",
+          "title": "独立审批与平台核实：mcf_create",
+          "passed": true,
+          "observed_at": "2026-10-12T19:52:17.734737+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "mcf_create",
             "status": "executed",
-            "cancelled": true,
-            "restored_inventory": 10,
-            "no_implicit_extra_refund": true
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "A-close-sync",
+          "step": "mcf-initial",
+          "title": "FBA 虚拟履约回读同一 SKU、数量、国家及 PROCESSING",
           "passed": true,
-          "observed_at": "2026-10-12T06:35:38.040236+00:00",
+          "observed_at": "2026-10-12T19:52:17.737692+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
+            "amazon_status": "PROCESSING",
+            "quantity": 1,
+            "destination_country": "FR"
           }
         },
         {
-          "step": "closed-business-outcome",
+          "step": "mcf-cancel-result",
+          "title": "独立审批与平台核实：mcf_cancel",
           "passed": true,
-          "observed_at": "2026-10-12T07:08:14.519742+00:00",
+          "observed_at": "2026-10-12T19:52:24.824035+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "required_steps_present": true,
-            "final_outcome_verified": true,
+            "operation": "mcf_cancel",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "shopify-refund-result",
+          "title": "独立审批与平台核实：refund",
+          "passed": true,
+          "observed_at": "2026-10-12T19:52:32.891302+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "refund",
+            "status": "executed",
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "shopify-cancel-result",
+          "title": "独立审批与平台核实：cancel",
+          "passed": true,
+          "observed_at": "2026-10-12T19:52:45.062408+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "cancel",
+            "status": "executed",
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "final-state",
+          "title": "两店最终回读与商家仓账本吻合",
+          "passed": true,
+          "observed_at": "2026-10-12T19:58:46.781818+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "shopify_outcome": "cancelled",
+            "shopify_available": 10,
+            "amazon_status": "CANCELLED",
+            "amazon_available": 10,
+            "amazon_reserved_observed": 0,
+            "merchant_on_hand": 15,
+            "merchant_reserved": 0
+          }
+        },
+        {
+          "step": "refund-total",
+          "title": "原测试交易全额退款，取消没有再退款",
+          "passed": true,
+          "observed_at": "2026-10-12T19:58:46.783772+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "refund_amount": "19.90",
+            "currency": "USD",
+            "net_test_payment": "0.00",
+            "no_duplicate_refund": true
+          }
+        },
+        {
+          "step": "audit-close",
+          "title": "当前案例任务结案，可导出报告及有效审计链",
+          "passed": true,
+          "observed_at": "2026-10-12T19:58:46.796016+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
             "audit_valid": true,
-            "no_unresolved_actions": true,
-            "all_jobs_completed": true
+            "audit_exported": true
           }
         }
       ]
     },
     {
       "id": "knowledge",
-      "title": "德国买家咨询、技能沉淀复用与商品说明改进",
+      "title": "C：德国能效咨询、技能复用与异常履约处理",
       "market": "DE",
-      "status": "passed",
+      "status": "completed",
+      "inventory_review_required": true,
       "steps": [
         {
           "step": "buyer_checkout",
+          "title": "买家前台测试结账，库存 10 → 9",
           "passed": true,
-          "observed_at": "2026-10-12T06:36:51.291374+00:00",
+          "observed_at": "2026-10-12T19:51:27.194166+00:00",
+          "source": "Shopify order + browser checkout",
           "facts": {
             "source_name": "web",
             "test": true,
-            "successful_test_transaction": true
+            "successful_test_transaction": true,
+            "inventory_before": 10,
+            "inventory_after": 9
           }
         },
         {
-          "step": "checkout_inventory_decrement",
+          "step": "virtual-sku-result",
+          "title": "独立审批与平台核实：sandbox_sku",
           "passed": true,
-          "observed_at": "2026-10-12T06:36:51.291411+00:00",
+          "observed_at": "2026-10-12T20:25:01.624540+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "before": 10,
-            "after": 9
+            "operation": "sandbox_sku",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "C-sync",
+          "step": "virtual-stock-result",
+          "title": "独立审批与平台核实：sandbox_stock",
           "passed": true,
-          "observed_at": "2026-10-12T06:37:12.598537+00:00",
+          "observed_at": "2026-10-12T20:25:01.625770+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
+            "operation": "sandbox_stock",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "C-baseline",
+          "step": "virtual-opening",
+          "title": "Amazon 动态 FBA 合成库存就绪",
           "passed": true,
-          "observed_at": "2026-10-12T06:39:05.820141+00:00",
+          "observed_at": "2026-10-12T20:25:03.725700+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "model_roles": [
-              "deepseek",
-              "deepseek",
-              "deepseek"
+            "amazon_available": 10
+          }
+        },
+        {
+          "step": "start-multi",
+          "title": "一个指令调度 Shopify 与 Amazon，两店同步及三角色分析完成",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:03.730208+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "platforms": [
+              "shopify_development",
+              "amazon_hosted_sandbox"
             ],
-            "explicit_order_scope": true,
-            "scoped_order_count": 1,
-            "result_notification_sent": true
+            "child_tasks": 4,
+            "real_model_roles": 6,
+            "amazon_orders": "official_static_fixture"
           }
         },
         {
-          "step": "C-baseline-report",
+          "step": "start-case-order",
+          "title": "当前案例买家订单与本店 SKU 出现在实际同步快照",
           "passed": true,
-          "observed_at": "2026-10-12T06:39:06.023870+00:00",
-          "facts": {}
+          "observed_at": "2026-10-12T20:25:03.731978+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "test_order": true,
+            "case_sku_linked": true
+          }
+        },
+        {
+          "step": "opening-count-result",
+          "title": "独立审批与平台核实：pool_adjust",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:03.733021+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "pool_adjust",
+            "status": "executed",
+            "source_environment": "synthetic_physical_opening_balance",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "initial-reservation",
+          "title": "独立批准合成盘点后，为当前真实测试订单预留一件",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:03.765723+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "physical_balance_is_synthetic_fixture": true,
+            "on_hand": 15,
+            "reserved": 1,
+            "safety": 5
+          }
+        },
+        {
+          "step": "warehouse-separation",
+          "title": "商家仓与 FBA 独立建池，不把平台可售量视为同一实物仓",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:03.766490+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "fba_read_only": true
+          }
+        },
+        {
+          "step": "order-analysis",
+          "title": "指定本次买家订单，真实模型输出带证据的三角色报告",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:03.767765+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "real_model_roles": 3,
+            "specific_case_order": true
+          }
         },
         {
           "step": "support-learning",
+          "title": "实际导入客服记录，一次生成两地区草稿并核对启用",
           "passed": true,
-          "observed_at": "2026-10-12T06:49:27.568754+00:00",
+          "observed_at": "2026-10-12T20:25:04.807479+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
             "support_records": 10,
-            "evidence_drafts": 2,
-            "drafts_initially_inactive": true,
-            "de_skill_active": true,
-            "both_market_skills_active": true,
-            "evidence_count": 5
+            "skill_drafts": 2,
+            "drafts_initially_inactive": true
           }
         },
         {
-          "step": "C-reuse",
+          "step": "skill-reuse",
+          "title": "指定本次买家订单，真实模型输出带证据的三角色报告",
           "passed": true,
-          "observed_at": "2026-10-12T06:42:17.226413+00:00",
+          "observed_at": "2026-10-12T20:25:10.828619+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "model_roles": [
-              "deepseek",
-              "deepseek",
-              "deepseek"
-            ],
-            "explicit_order_scope": true,
-            "scoped_order_count": 1,
-            "result_notification_sent": true
+            "real_model_roles": 3,
+            "specific_case_order": true
           }
         },
         {
-          "step": "C-reuse-report",
+          "step": "skill-reuse-evidence",
+          "title": "核对后启用技能，同订单回答只复用德国能效资料",
           "passed": true,
-          "observed_at": "2026-10-12T06:42:17.427625+00:00",
-          "facts": {}
-        },
-        {
-          "step": "C-unsafe-proposal",
-          "passed": true,
-          "observed_at": "2026-10-12T06:43:36.820599+00:00",
+          "observed_at": "2026-10-12T20:25:10.830319+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
+            "active_market_skills": 2,
+            "relevant_market": "DE"
           }
         },
         {
-          "step": "C-unsafe-result",
+          "step": "unsafe-description-result",
+          "title": "独立审批与平台核实：product",
           "passed": true,
-          "observed_at": "2026-10-12T06:44:09.281358+00:00",
+          "observed_at": "2026-10-12T20:25:13.890596+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "independent_approval": true,
-            "real_callback": true,
+            "operation": "product",
             "status": "rejected",
-            "description_matches": true
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "C-description-proposal",
+          "step": "rejection-readback",
+          "title": "错误承诺被拒绝后，Shopify 商品说明保持原值",
           "passed": true,
-          "observed_at": "2026-10-12T06:45:25.456537+00:00",
+          "observed_at": "2026-10-12T20:25:14.811143+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
+            "description_unchanged": true
           }
         },
         {
-          "step": "C-description-result",
+          "step": "approved-description-result",
+          "title": "独立审批与平台核实：product",
           "passed": true,
-          "observed_at": "2026-10-12T06:45:55.375384+00:00",
+          "observed_at": "2026-10-12T20:25:20.864458+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
           "facts": {
-            "independent_approval": true,
-            "real_callback": true,
+            "operation": "product",
             "status": "executed",
-            "description_matches": true
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
           }
         },
         {
-          "step": "C-frontpage",
+          "step": "mcf-create-result",
+          "title": "独立审批与平台核实：mcf_create",
           "passed": true,
-          "observed_at": "2026-10-12T06:48:22.981917+00:00",
+          "observed_at": "2026-10-12T20:25:31.921519+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "mcf_create",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "mcf-initial",
+          "title": "FBA 虚拟履约回读同一 SKU、数量、国家及 PROCESSING",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:31.923507+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "amazon_status": "PROCESSING",
+            "quantity": 1,
+            "destination_country": "DE"
+          }
+        },
+        {
+          "step": "mcf-unfulfillable-result",
+          "title": "独立审批与平台核实：sandbox_status",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:38.978028+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "sandbox_status",
+            "status": "executed",
+            "source_environment": "amazon_dynamic_sandbox",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "merchant-fallback-result",
+          "title": "独立审批与平台核实：fulfill",
+          "passed": true,
+          "observed_at": "2026-10-12T20:25:48.037620+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "operation": "fulfill",
+            "status": "executed",
+            "source_environment": "shopify_test_store",
+            "self_approval_blocked": true,
+            "independent_fixture_identities": true
+          }
+        },
+        {
+          "step": "final-state",
+          "title": "两店最终回读与商家仓账本吻合",
+          "passed": true,
+          "observed_at": "2026-10-12T20:34:31.615541+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "shopify_outcome": "fulfilled",
+            "shopify_available": 9,
+            "amazon_status": "UNFULFILLABLE",
+            "amazon_available": 9,
+            "amazon_reserved_observed": 1,
+            "merchant_on_hand": 14,
+            "merchant_reserved": 0
+          }
+        },
+        {
+          "step": "fba-inventory-review",
+          "title": "包裹无法送达，平台库存与预留保持读数并等待核实",
+          "passed": true,
+          "observed_at": "2026-10-12T20:34:31.617482+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "amazon_package_status": "UNDELIVERABLE",
+            "amazon_available": 9,
+            "amazon_reserved_observed": 1,
+            "fba_inventory_review_required": true,
+            "automatic_restock": false
+          }
+        },
+        {
+          "step": "explicit-fallback",
+          "title": "先核实 FBA 包裹无法送达，再独立批准商家仓履约",
+          "passed": true,
+          "observed_at": "2026-10-12T20:34:31.618174+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "failed_package_verified": true,
+            "automatic_double_fulfillment": false
+          }
+        },
+        {
+          "step": "audit-close",
+          "title": "当前案例任务结案，可导出报告及有效审计链",
+          "passed": true,
+          "observed_at": "2026-10-12T20:34:31.633753+00:00",
+          "source": "Real application HTTP + own-account hosted APIs",
+          "facts": {
+            "audit_valid": true,
+            "audit_exported": true
+          }
+        },
+        {
+          "step": "frontpage",
+          "title": "买家前台显示经审批后的完整商品说明",
+          "passed": true,
+          "observed_at": "2026-10-12T20:35:28.123047+00:00",
+          "source": "Chrome storefront accessibility tree + unedited private viewport screenshot",
           "facts": {
             "browser_description_matches": true
-          }
-        },
-        {
-          "step": "C-fulfill-proposal",
-          "passed": true,
-          "observed_at": "2026-10-12T06:49:52.622091+00:00",
-          "facts": {
-            "waiting_for_approval": true,
-            "platform_unchanged": true,
-            "applicant_self_approval_denied": true
-          }
-        },
-        {
-          "step": "C-fulfill-result",
-          "passed": true,
-          "observed_at": "2026-10-12T06:50:28.578730+00:00",
-          "facts": {
-            "independent_approval": true,
-            "real_callback": true,
-            "status": "executed",
-            "fulfillment_status": "FULFILLED",
-            "tracking_matches": true
-          }
-        },
-        {
-          "step": "C-close-sync",
-          "passed": true,
-          "observed_at": "2026-10-12T06:51:21.885397+00:00",
-          "facts": {
-            "case_order_present": true,
-            "result_notification_sent": true
-          }
-        },
-        {
-          "step": "closed-business-outcome",
-          "passed": true,
-          "observed_at": "2026-10-12T07:08:16.834477+00:00",
-          "facts": {
-            "required_steps_present": true,
-            "final_outcome_verified": true,
-            "audit_valid": true,
-            "no_unresolved_actions": true,
-            "all_jobs_completed": true
           }
         }
       ]
     }
-  ]
+  ],
+  "repairs": [
+    {
+      "problem": "JSON-mode inventory role failed local schema validation and used an explicit fallback",
+      "fix": "Default strict_tools and explicit output budgets; the readonly multi-store stage was rerun and all role contracts validated"
+    },
+    {
+      "problem": "Natural-language learning was previously treated as a chat request",
+      "fix": "Explicit learning rule creates one global draft task for selected stores; drafts remain inactive until reviewed"
+    },
+    {
+      "problem": "UNFULFILLABLE was incorrectly assumed to release all virtual inventory in the acceptance expectation",
+      "fix": "Preserve actual available=9 and reserved=1, verify the UNDELIVERABLE package, show platform reservation separately and retain a manual inventory-review note"
+    }
+  ],
+  "passed": true
 }

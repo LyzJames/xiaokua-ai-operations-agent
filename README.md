@@ -4,7 +4,7 @@
 
 小跨是面向跨境电商团队的 **AI Agent 应用**。它是一个独立 Web 应用：卖家可以在 Web 选择店铺，用自然语言下达运营目标，也可以通过飞书机器人指挥同一套任务。小跨同步多平台订单与库存、分析业务问题、执行经过独立审批的操作，并把客服经验整理为可复用技能。
 
-项目包含完整工作台、真实平台适配、持久任务、成员权限和审计记录。你可以先在本机体验，再接入自己的 Shopify、Amazon 和模型账号；飞书是可选的办公入口。当前实现 Shopify 业务操作、Amazon 最新订单/FBA 读取及 MCF 动态沙箱，并提供共享库存台账。淘宝、京东、拼多多、TEMU 已纳入统一适配契约，取得平台资格并实现适配器后可扩展接入。按下文完成账户、业务和运行环境验收后，可从限定店铺与商品范围开始试运营。
+项目包含完整工作台、真实平台适配、持久任务、成员权限和审计记录。你可以先在本机体验，再接入自己的 Shopify、Amazon 和模型账号；飞书是可选的办公入口。当前实现 Shopify 业务操作、Amazon 最新订单/FBA 读取及 MCF 动态沙箱，并提供共享库存台账。当前只注册已经实现的 Shopify 与 Amazon；Amazon 联通机制和新增平台的开发方法见 [平台目录说明](backend/production/platforms/README.md)。按下文完成账户、业务和运行环境验收后，可从限定店铺与商品范围开始试运营。
 
 [快速开始](#快速开始) · [日常怎么用](#日常怎么用) · [开始试运营需要做什么](#开始试运营需要做什么) · [接入文档](docs/INTEGRATIONS.md) · [测试报告](docs/TEST_REPORT.md)
 
@@ -34,7 +34,7 @@
 ```bash
 git clone https://github.com/LyzJames/xiaokua-ai-operations-agent.git
 cd xiaokua-ai-operations-agent
-uv sync --frozen
+uv sync --frozen --no-dev
 cd frontend
 npm ci
 npm run build
@@ -106,7 +106,7 @@ uv run python -m backend.demo --data-dir data/my-fresh-demo --port 8003
 5. **管理共享库存。** 在“共享库存”创建仓库/SKU 池，先映射已同步规格，再由另一成员批准初始实物盘点。填写全部店铺配额，合计不能超过在库减预留减安全库存；系统先完成减量并回读，再生成增量审批。FBA 单独建只读池。规则和操作步骤见 [共享库存设计](docs/SHARED_INVENTORY_DESIGN.md)。
 6. **积累客服经验。** 在“记忆与技能”导入已去除个人信息的客服记录，可先用 [示例 CSV](examples/support-synthetic.csv)。每个市场/主题至少 5 条记录可生成草稿；核对证据并启用后，再发送“分析德国客户的能效咨询”，让后续分析复用对应技能。
 
-Amazon 静态订单是官方固定样例，不代表开发者商店真实订单；动态 FBA/MCF 有可变化的沙箱状态。其他四个平台只有适配契约和合成契约测试，尚未真实连接。FBA 与商家仓分别管理，尚未开放 Amazon 自发货可售量写入。
+Amazon 静态订单是官方固定样例，不代表开发者商店真实订单；动态 FBA/MCF 有可变化的沙箱状态。其他平台尚未实现连接器。FBA 与商家仓分别管理，尚未开放 Amazon 自发货可售量写入。
 
 ## 开始试运营需要做什么
 
@@ -137,11 +137,11 @@ flowchart LR
     KNOWLEDGE[客服经验 / 技能] --> READ
 ```
 
-新增平台可参考 `backend/production/` 中的适配器；修改业务执行流程时应保留独立审批、执行前校验和结果未知时停止自动重试的约束。编排、角色恢复、证据校验和技能格式的详细设计见 [架构说明](docs/RESEARCH.md) 与 [技术调研](docs/TECH_REVIEW.md)。
+Amazon 的联通机制和新增平台步骤见 [平台目录 README](backend/production/platforms/README.md)；修改业务执行流程时应保留独立审批、执行前校验和结果未知时停止自动重试的约束。编排、角色恢复、证据校验和技能格式的详细设计见 [架构说明](docs/RESEARCH.md) 与 [技术调研](docs/TECH_REVIEW.md)。
 
 ## 测试与文档
 
-已验证买家前台下单的 Shopify/飞书案例，以及 Web 多店指挥、共享库存先减后增、Amazon 动态沙箱履约与虚拟交付流程。测试按业务闭环、权限安全、Agent 分析、记忆技能和恢复发布五类归纳；详情、完整流程图片及验证边界见 [测试报告](docs/TEST_REPORT.md)。公开材料使用合成数据或脱敏记录。
+本轮重跑三个全新买家前台订单，均从 Shopify + Amazon 多店指令开始，走完履约/售后/技能复用、独立审批、平台回读和审计。案例 C 保留 FBA 库存核实项。分类结果、完整流程图片与边界见 [测试报告](docs/TEST_REPORT.md)。GitHub 当前版本只提交应用与报告，测试源码及原始证据留在测试者本机。
 
 | 文档 | 内容 |
 | --- | --- |
@@ -149,7 +149,6 @@ flowchart LR
 | [试运营与部署](docs/DEPLOYMENT.md) | 运行环境、上线前准备、真实写入配置与备份恢复 |
 | [完整用户案例](docs/USER_JOURNEYS.md) | 三个业务故事及从头到尾的复现步骤 |
 | [测试报告](docs/TEST_REPORT.md) | 分类结果、流程截图、错误修复与验证范围 |
-| [多平台流程](docs/MULTI_PLATFORM_ACCEPTANCE.md) | Web 多店、共享库存与 Amazon 完整链路及截图 |
 | [跨平台架构](docs/COMMERCE_ARCHITECTURE.md) | 数据/能力契约、店铺范围、平台适配扩展方法 |
 | [共享库存规则](docs/SHARED_INVENTORY_DESIGN.md) | 实物盘点、预留、配额、冻结与恢复 |
 | [架构说明](docs/RESEARCH.md) | 任务、审批、Agent、记忆和适配器设计 |
